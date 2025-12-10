@@ -152,4 +152,84 @@ readonly class RelayPointSearchCriteria
             limit: $limit
         );
     }
+
+    /**
+     * Return a new instance with a different radius.
+     *
+     * @param int $radius Search radius in kilometers
+     */
+    public function withRadius(int $radius): self
+    {
+        return new self(
+            postalCode: $this->postalCode,
+            city: $this->city,
+            countryCode: $this->countryCode,
+            latitude: $this->latitude,
+            longitude: $this->longitude,
+            radius: $radius,
+            limit: $this->limit,
+            deliveryMode: $this->deliveryMode,
+            weight: $this->weight,
+        );
+    }
+
+    /**
+     * Return a new instance with a different limit.
+     *
+     * @param int $limit Maximum number of results
+     */
+    public function withLimit(int $limit): self
+    {
+        return new self(
+            postalCode: $this->postalCode,
+            city: $this->city,
+            countryCode: $this->countryCode,
+            latitude: $this->latitude,
+            longitude: $this->longitude,
+            radius: $this->radius,
+            limit: min($limit, self::MAX_LIMIT),
+            deliveryMode: $this->deliveryMode,
+            weight: $this->weight,
+        );
+    }
+
+    /**
+     * Return a new instance with a delivery mode.
+     *
+     * @param string|null $deliveryMode Delivery mode code
+     */
+    public function withDeliveryMode(?string $deliveryMode): self
+    {
+        return new self(
+            postalCode: $this->postalCode,
+            city: $this->city,
+            countryCode: $this->countryCode,
+            latitude: $this->latitude,
+            longitude: $this->longitude,
+            radius: $this->radius,
+            limit: $this->limit,
+            deliveryMode: $deliveryMode,
+            weight: $this->weight,
+        );
+    }
+
+    /**
+     * Return a new instance with a weight.
+     *
+     * @param int|null $weight Package weight in grams
+     */
+    public function withWeight(?int $weight): self
+    {
+        return new self(
+            postalCode: $this->postalCode,
+            city: $this->city,
+            countryCode: $this->countryCode,
+            latitude: $this->latitude,
+            longitude: $this->longitude,
+            radius: $this->radius,
+            limit: $this->limit,
+            deliveryMode: $this->deliveryMode,
+            weight: $weight,
+        );
+    }
 }

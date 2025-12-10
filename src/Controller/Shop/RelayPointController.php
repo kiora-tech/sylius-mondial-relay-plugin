@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Kiora\SyliusMondialRelayPlugin\Controller\Shop;
 
-use Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClientInterface;
+use Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelaySoapClient;
 use Kiora\SyliusMondialRelayPlugin\Api\DTO\RelayPointSearchCriteria;
 use Kiora\SyliusMondialRelayPlugin\Api\Exception\MondialRelayApiException;
 use Psr\Log\LoggerInterface;
@@ -30,7 +30,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 final class RelayPointController extends AbstractController
 {
     public function __construct(
-        private readonly MondialRelayApiClientInterface $apiClient,
+        private readonly MondialRelaySoapClient $soapClient,
         private readonly ShipmentRepositoryInterface $shipmentRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly LoggerInterface $logger,
@@ -56,7 +56,7 @@ final class RelayPointController extends AbstractController
         try {
             $criteria = $this->buildSearchCriteriaFromRequest($request);
 
-            $collection = $this->apiClient->findRelayPoints($criteria);
+            $collection = $this->soapClient->findRelayPoints($criteria);
 
             return $this->json([
                 'success' => true,

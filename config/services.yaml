@@ -50,6 +50,13 @@ services:
     Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClientInterface:
         alias: Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient
 
+    # SOAP Client for Mondial Relay API v1 (relay point search)
+    Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelaySoapClient:
+        arguments:
+            $enseigne: '%env(MONDIAL_RELAY_ENSEIGNE)%'
+            $privateKey: '%env(MONDIAL_RELAY_PRIVATE_KEY)%'
+            $logger: '@monolog.logger.mondial_relay'
+
     # Alias for easy injection
     Symfony\Contracts\HttpClient\HttpClientInterface $mondialRelayClient: '@kiora_sylius_mondial_relay.http_client'
     Symfony\Contracts\Cache\CacheInterface $mondialRelayCache: '@kiora_sylius_mondial_relay.cache'
@@ -103,7 +110,7 @@ services:
     # Shop Controllers (for relay point widget)
     Kiora\SyliusMondialRelayPlugin\Controller\Shop\RelayPointController:
         arguments:
-            $apiClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient'
+            $soapClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelaySoapClient'
             $shipmentRepository: '@sylius.repository.shipment'
             $orderRepository: '@sylius.repository.order'
             $logger: '@monolog.logger.mondial_relay'
