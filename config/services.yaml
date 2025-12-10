@@ -101,6 +101,7 @@ services:
     Kiora\SyliusMondialRelayPlugin\Service\MondialRelayQrCodeGenerator:
         arguments:
             $logger: '@monolog.logger.mondial_relay'
+            $entityManager: '@doctrine.orm.entity_manager'
             $qrCodesDirectory: '%kernel.project_dir%/public/media/mondial_relay/qrcodes'
             $qrCodesPublicPath: '/media/mondial_relay/qrcodes'
 

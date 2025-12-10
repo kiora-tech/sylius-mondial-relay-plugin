@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Kiora\SyliusMondialRelayPlugin\Service;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
+use Kiora\SyliusMondialRelayPlugin\Entity\MondialRelayShipmentInterface;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -19,6 +21,7 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
 
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly EntityManagerInterface $entityManager,
         private readonly string $qrCodesDirectory,
         private readonly string $qrCodesPublicPath,
     ) {
@@ -28,14 +31,32 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
     public function generateQrCode(ShipmentInterface $shipment): array
     {
         try {
-            // Get tracking number
-            $trackingNumber = $shipment->getTracking();
-            if (null === $trackingNumber || '' === $trackingNumber) {
+            // Check if shipment has Mondial Relay pickup point
+            if (!$shipment instanceof MondialRelayShipmentInterface) {
                 return [
                     'success' => false,
-                    'error' => 'Shipment has no tracking number. Please generate a label first.',
+                    'error' => 'Shipment does not support Mondial Relay.',
                 ];
             }
+
+            $pickupPoint = $shipment->getMondialRelayPickupPoint();
+            if (null === $pickupPoint) {
+                return [
+                    'success' => false,
+                    'error' => 'Aucun point relais sélectionné pour cette expédition.',
+                ];
+            }
+
+            // Build QR code data with pickup point information
+            // Format: MR|RelayPointId|Name|PostalCode|City
+            // This can be scanned by Mondial Relay depot staff
+            $qrData = sprintf(
+                "MR|%s|%s|%s|%s",
+                $pickupPoint->getRelayPointId(),
+                $this->sanitizeForQrCode($pickupPoint->getName()),
+                $pickupPoint->getPostalCode(),
+                $this->sanitizeForQrCode($pickupPoint->getCity())
+            );
 
             // Create directory if it doesn't exist
             if (!$this->filesystem->exists($this->qrCodesDirectory)) {
@@ -43,12 +64,13 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
             }
 
             // Generate QR code
-            $qrCodePath = sprintf('%s/%s.png', $this->qrCodesDirectory, $shipment->getId());
+            $qrCodeFilename = sprintf('mr-%s.png', $shipment->getId());
+            $qrCodePath = sprintf('%s/%s', $this->qrCodesDirectory, $qrCodeFilename);
 
             $result = Builder::create()
                 ->writer(new PngWriter())
                 ->writerOptions([])
-                ->data($trackingNumber)
+                ->data($qrData)
                 ->encoding(new Encoding('UTF-8'))
                 ->errorCorrectionLevel(ErrorCorrectionLevel::High)
                 ->size(300)
@@ -59,12 +81,23 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
 
             $result->saveToFile($qrCodePath);
 
-            $qrCodeUrl = sprintf('%s/%s.png', $this->qrCodesPublicPath, $shipment->getId());
+            $qrCodeUrl = sprintf('%s/%s', $this->qrCodesPublicPath, $qrCodeFilename);
+
+            // Save QR code URL to shipment
+            $shipment->setMondialRelayLabelUrl($qrCodeUrl);
+            $this->entityManager->persist($shipment);
+            $this->entityManager->flush();
+
+            $this->logger->info('QR code generated successfully', [
+                'shipment_id' => $shipment->getId(),
+                'relay_point_id' => $pickupPoint->getRelayPointId(),
+                'qr_code_url' => $qrCodeUrl,
+            ]);
 
             return [
                 'success' => true,
                 'qr_code_url' => $qrCodeUrl,
-                'tracking_number' => $trackingNumber,
+                'relay_point_id' => $pickupPoint->getRelayPointId(),
             ];
         } catch (\Exception $e) {
             $this->logger->error('Failed to generate QR code', [
@@ -79,12 +112,35 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
         }
     }
 
+    /**
+     * Sanitize string for QR code (remove special characters, limit length)
+     */
+    private function sanitizeForQrCode(string $value): string
+    {
+        // Remove accents and special characters
+        $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
+        // Remove pipe character (used as separator)
+        $value = str_replace('|', ' ', $value);
+        // Limit length
+        return substr(trim($value), 0, 50);
+    }
+
     public function getQrCodeUrl(ShipmentInterface $shipment): ?string
     {
-        $qrCodePath = sprintf('%s/%s.png', $this->qrCodesDirectory, $shipment->getId());
+        // First check if URL is stored in shipment
+        if ($shipment instanceof MondialRelayShipmentInterface) {
+            $storedUrl = $shipment->getMondialRelayLabelUrl();
+            if (null !== $storedUrl && '' !== $storedUrl) {
+                return $storedUrl;
+            }
+        }
+
+        // Fallback: check if file exists on disk
+        $qrCodeFilename = sprintf('mr-%s.png', $shipment->getId());
+        $qrCodePath = sprintf('%s/%s', $this->qrCodesDirectory, $qrCodeFilename);
 
         if ($this->filesystem->exists($qrCodePath)) {
-            return sprintf('%s/%s.png', $this->qrCodesPublicPath, $shipment->getId());
+            return sprintf('%s/%s', $this->qrCodesPublicPath, $qrCodeFilename);
         }
 
         return null;
@@ -97,24 +153,33 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
 
     public function deleteQrCode(ShipmentInterface $shipment): bool
     {
-        $qrCodePath = sprintf('%s/%s.png', $this->qrCodesDirectory, $shipment->getId());
+        $qrCodeFilename = sprintf('mr-%s.png', $shipment->getId());
+        $qrCodePath = sprintf('%s/%s', $this->qrCodesDirectory, $qrCodeFilename);
 
-        if (!$this->filesystem->exists($qrCodePath)) {
-            return false;
+        $deleted = false;
+
+        // Remove file from disk
+        if ($this->filesystem->exists($qrCodePath)) {
+            try {
+                $this->filesystem->remove($qrCodePath);
+                $deleted = true;
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to delete QR code file', [
+                    'shipment_id' => $shipment->getId(),
+                    'qr_code_path' => $qrCodePath,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        try {
-            $this->filesystem->remove($qrCodePath);
-
-            return true;
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to delete QR code', [
-                'shipment_id' => $shipment->getId(),
-                'qr_code_path' => $qrCodePath,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
+        // Clear URL from shipment
+        if ($shipment instanceof MondialRelayShipmentInterface) {
+            $shipment->setMondialRelayLabelUrl(null);
+            $this->entityManager->persist($shipment);
+            $this->entityManager->flush();
+            $deleted = true;
         }
+
+        return $deleted;
     }
 }
