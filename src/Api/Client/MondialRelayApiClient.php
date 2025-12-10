@@ -28,10 +28,9 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class MondialRelayApiClient implements MondialRelayApiClientInterface
 {
-    // Note: Mondial Relay REST API v2 uses the same URL for both production and sandbox.
-    // The sandbox mode is determined by the API credentials used (test credentials like TTMRSDBX).
-    private const API_BASE_URL_PRODUCTION = 'https://api.mondialrelay.com/v2';
-    private const API_BASE_URL_SANDBOX = 'https://api.mondialrelay.com/v2';
+    // Mondial Relay Connect API v2 URLs
+    private const API_BASE_URL_PRODUCTION = 'https://connect-api.mondialrelay.com/api';
+    private const API_BASE_URL_SANDBOX = 'https://connect-api-sandbox.mondialrelay.com/api';
     private const DEFAULT_TIMEOUT = 30.0;
     private const MAX_RETRY_ATTEMPTS = 3;
     private const RETRY_DELAY_MS = 1000; // Initial delay, increases exponentially
@@ -229,7 +228,7 @@ final class MondialRelayApiClient implements MondialRelayApiClientInterface
         array $queryParams = []
     ): ResponseInterface {
         $url = $this->buildUrl($endpoint, $queryParams);
-        $headers = $this->buildHeaders($method, $endpoint, $body);
+        $headers = $this->buildHeaders();
 
         $options = [
             'headers' => $headers,
@@ -389,45 +388,24 @@ final class MondialRelayApiClient implements MondialRelayApiClientInterface
     }
 
     /**
-     * Build request headers including authentication signature.
+     * Build request headers including Basic authentication.
      *
-     * @param string $method HTTP method
-     * @param string $endpoint API endpoint path
-     * @param array<string, mixed>|null $body Request body
+     * Mondial Relay Connect API v2 uses HTTP Basic Authentication.
+     * - apiKey: login email (e.g., BRANDID@business-api.mondialrelay.com)
+     * - apiSecret: password
      *
      * @return array<string, string>
      */
-    private function buildHeaders(string $method, string $endpoint, ?array $body): array
+    private function buildHeaders(): array
     {
-        $timestamp = (string) time();
-        $signature = $this->generateSignature($method, $endpoint, $body, $timestamp);
+        $credentials = base64_encode($this->apiKey . ':' . $this->apiSecret);
 
         return [
-            'Authorization' => 'Bearer ' . $this->apiKey,
-            'X-MR-Signature' => $signature,
-            'X-MR-Timestamp' => $timestamp,
+            'Authorization' => 'Basic ' . $credentials,
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'User-Agent' => 'Kiora-Sylius-MondialRelay-Plugin/1.0',
         ];
-    }
-
-    /**
-     * Generate HMAC signature for request authentication.
-     *
-     * Signature algorithm: HMAC-SHA256(secret, method + endpoint + timestamp + body_json)
-     *
-     * @param string $method HTTP method
-     * @param string $endpoint API endpoint path
-     * @param array<string, mixed>|null $body Request body
-     * @param string $timestamp Unix timestamp
-     */
-    private function generateSignature(string $method, string $endpoint, ?array $body, string $timestamp): string
-    {
-        $bodyString = $body !== null ? json_encode($body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : '';
-        $payload = $method . $endpoint . $timestamp . $bodyString;
-
-        return hash_hmac('sha256', $payload, $this->apiSecret);
     }
 
     /**
