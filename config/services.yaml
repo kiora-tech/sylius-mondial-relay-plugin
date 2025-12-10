@@ -80,7 +80,6 @@ services:
     # Services
     Kiora\SyliusMondialRelayPlugin\Service\MondialRelayApiV2Service:
         arguments:
-            $apiClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient'
             $logger: '@monolog.logger.mondial_relay'
 
     Kiora\SyliusMondialRelayPlugin\Service\MondialRelayLabelGenerator:
