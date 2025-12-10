@@ -28,8 +28,10 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class MondialRelayApiClient implements MondialRelayApiClientInterface
 {
+    // Note: Mondial Relay REST API v2 uses the same URL for both production and sandbox.
+    // The sandbox mode is determined by the API credentials used (test credentials like TTMRSDBX).
     private const API_BASE_URL_PRODUCTION = 'https://api.mondialrelay.com/v2';
-    private const API_BASE_URL_SANDBOX = 'https://api-sandbox.mondialrelay.com/v2';
+    private const API_BASE_URL_SANDBOX = 'https://api.mondialrelay.com/v2';
     private const DEFAULT_TIMEOUT = 30.0;
     private const MAX_RETRY_ATTEMPTS = 3;
     private const RETRY_DELAY_MS = 1000; // Initial delay, increases exponentially
