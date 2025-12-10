@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Kiora\SyliusMondialRelayPlugin;
 
+use Kiora\SyliusMondialRelayPlugin\DependencyInjection\KioraSyliusMondialRelayExtension;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 /**
@@ -23,5 +25,10 @@ final class KioraSyliusMondialRelayPlugin extends AbstractBundle
     public function getPath(): string
     {
         return \dirname(__DIR__);
+    }
+
+    public function getContainerExtension(): ?ExtensionInterface
+    {
+        return new KioraSyliusMondialRelayExtension();
     }
 }
