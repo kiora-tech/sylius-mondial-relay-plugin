@@ -3,138 +3,160 @@
 {% block title %}{{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }} | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="d-flex flex-column min-vh-100">
-    {% hook 'sylius_admin.common.index#header' %}
-
-    <main class="container-fluid px-4 py-4 flex-grow-1">
-        <nav aria-label="breadcrumb" class="mb-3">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">{{ 'sylius.ui.dashboard'|trans }}</a></li>
-                <li class="breadcrumb-item active">{{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }}</li>
-            </ol>
-        </nav>
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0">
-                <i class="fas fa-cog me-2"></i>
-                {{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }}
-            </h1>
+<div class="page">
+    {# Sidebar #}
+    <aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+        <div class="container-fluid">
+            {% hook 'sylius_admin.common.component.sidebar' with { _prefixes: [] } %}
         </div>
+    </aside>
 
-        <p class="text-muted mb-4">{{ 'kiora_sylius_mondial_relay.ui.configuration_subtitle'|trans }}</p>
+    <div class="page-wrapper">
+        {# Navbar #}
+        {% hook 'sylius_admin.common.component.navbar' with { _prefixes: [] } %}
 
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-
-                        <div class="mb-4">
-                            <h5 class="card-title border-bottom pb-2">
-                                <i class="fas fa-key me-2"></i>
-                                {{ 'kiora_sylius_mondial_relay.ui.api_credentials'|trans }}
-                            </h5>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    {{ form_row(form.api_key) }}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    {{ form_row(form.api_secret) }}
-                                </div>
+        {# Page content #}
+        <div class="page-body">
+            <div class="container-xl">
+                {# Flashes #}
+                {% for type, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible" role="alert">
+                            <div class="d-flex">
+                                <div>{{ message|trans }}</div>
                             </div>
+                            <a class="btn-close" data-bs-dismiss="alert" aria-label="Close"></a>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    {{ form_row(form.brand_id) }}
+                {# Breadcrumb #}
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">{{ 'sylius.ui.dashboard'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }}</li>
+                    </ol>
+                </nav>
+
+                {# Page header #}
+                <div class="page-header d-print-none mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <h2 class="page-title">
+                                {{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }}
+                            </h2>
+                            <div class="text-muted mt-1">{{ 'kiora_sylius_mondial_relay.ui.configuration_subtitle'|trans }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Content #}
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                                <div class="mb-4">
+                                    <h5 class="card-title border-bottom pb-2">
+                                        {{ 'kiora_sylius_mondial_relay.ui.api_credentials'|trans }}
+                                    </h5>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            {{ form_row(form.api_key) }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            {{ form_row(form.api_secret) }}
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            {{ form_row(form.brand_id) }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            {{ form_row(form.sandbox) }}
+                                        </div>
+                                    </div>
+
+                                    <div class="alert alert-info">
+                                        {{ 'kiora_sylius_mondial_relay.ui.api_credentials_help'|trans }}
+                                    </div>
+
+                                    <button type="button" id="test-connection-btn" class="btn btn-outline-secondary">
+                                        {{ 'kiora_sylius_mondial_relay.ui.test_connection'|trans }}
+                                    </button>
+                                    <span id="test-connection-result" class="ms-3"></span>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    {{ form_row(form.sandbox) }}
+
+                                <div class="mb-4">
+                                    <h5 class="card-title border-bottom pb-2">
+                                        {{ 'kiora_sylius_mondial_relay.ui.default_settings'|trans }}
+                                    </h5>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            {{ form_row(form.default_weight) }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            {{ form_row(form.default_collection_mode) }}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                {{ 'kiora_sylius_mondial_relay.ui.api_credentials_help'|trans }}
-                            </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        {{ 'sylius.ui.save_changes'|trans }}
+                                    </button>
 
-                            <button type="button" id="test-connection-btn" class="btn btn-outline-secondary">
-                                <i class="fas fa-plug me-2"></i>
-                                {{ 'kiora_sylius_mondial_relay.ui.test_connection'|trans }}
-                            </button>
-                            <span id="test-connection-result" class="ms-3"></span>
+                                    <a href="{{ path('sylius_admin_dashboard') }}" class="btn btn-secondary">
+                                        {{ 'sylius.ui.cancel'|trans }}
+                                    </a>
+                                </div>
+
+                                {{ form_end(form) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                {{ 'kiora_sylius_mondial_relay.ui.documentation'|trans }}
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <a href="https://www.mondialrelay.fr/media/624438/documentation-api-v2.pdf" target="_blank" class="text-decoration-none">
+                                            {{ 'kiora_sylius_mondial_relay.ui.api_documentation'|trans }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="https://connect.mondialrelay.com/" target="_blank" class="text-decoration-none">
+                                            {{ 'kiora_sylius_mondial_relay.ui.developer_portal'|trans }}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
 
-                        <div class="mb-4">
-                            <h5 class="card-title border-bottom pb-2">
-                                <i class="fas fa-sliders-h me-2"></i>
-                                {{ 'kiora_sylius_mondial_relay.ui.default_settings'|trans }}
-                            </h5>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    {{ form_row(form.default_weight) }}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    {{ form_row(form.default_collection_mode) }}
-                                </div>
+                        <div class="card">
+                            <div class="card-header">
+                                {{ 'kiora_sylius_mondial_relay.ui.help'|trans }}
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0 text-muted">{{ 'kiora_sylius_mondial_relay.ui.help_text'|trans }}</p>
                             </div>
                         </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>
-                                {{ 'sylius.ui.save_changes'|trans }}
-                            </button>
-
-                            <a href="{{ path('sylius_admin_dashboard') }}" class="btn btn-secondary">
-                                {{ 'sylius.ui.cancel'|trans }}
-                            </a>
-                        </div>
-
-                        {{ form_end(form) }}
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="fas fa-book me-2"></i>
-                        {{ 'kiora_sylius_mondial_relay.ui.documentation'|trans }}
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <a href="https://www.mondialrelay.fr/media/624438/documentation-api-v2.pdf" target="_blank" class="text-decoration-none">
-                                    <i class="fas fa-file-pdf me-2"></i>
-                                    {{ 'kiora_sylius_mondial_relay.ui.api_documentation'|trans }}
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://connect.mondialrelay.com/" target="_blank" class="text-decoration-none">
-                                    <i class="fas fa-external-link-alt me-2"></i>
-                                    {{ 'kiora_sylius_mondial_relay.ui.developer_portal'|trans }}
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-question-circle me-2"></i>
-                        {{ 'kiora_sylius_mondial_relay.ui.help'|trans }}
-                    </div>
-                    <div class="card-body">
-                        <p class="mb-0 text-muted">{{ 'kiora_sylius_mondial_relay.ui.help_text'|trans }}</p>
-                    </div>
-                </div>
-            </div>
         </div>
-    </main>
 
-    {% hook 'sylius_admin.common.index#footer' %}
+        {# Footer #}
+        {% hook 'sylius_admin.common.component.footer' with { _prefixes: [] } %}
+    </div>
 </div>
 
 <script>
@@ -171,14 +193,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 testBtn.disabled = false;
                 if (data.success) {
-                    resultSpan.innerHTML = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>' + data.message + '</span>';
+                    resultSpan.innerHTML = '<span class="badge bg-success">' + data.message + '</span>';
                 } else {
-                    resultSpan.innerHTML = '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>' + data.message + '</span>';
+                    resultSpan.innerHTML = '<span class="badge bg-danger">' + data.message + '</span>';
                 }
             })
             .catch(error => {
                 testBtn.disabled = false;
-                resultSpan.innerHTML = '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>{{ "kiora_sylius_mondial_relay.ui.test_connection.error"|trans }}</span>';
+                resultSpan.innerHTML = '<span class="badge bg-danger">{{ "kiora_sylius_mondial_relay.ui.test_connection.error"|trans }}</span>';
             });
         });
     }

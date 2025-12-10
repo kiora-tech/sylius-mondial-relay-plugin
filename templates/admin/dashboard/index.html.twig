@@ -3,80 +3,94 @@
 {% block title %}{{ 'kiora_sylius_mondial_relay.ui.menu.dashboard'|trans }} | {{ parent() }}{% endblock %}
 
 {% block body %}
-<div class="d-flex flex-column min-vh-100">
-    {% hook 'sylius_admin.common.index#header' %}
-
-    <main class="container-fluid px-4 py-4 flex-grow-1">
-        <nav aria-label="breadcrumb" class="mb-3">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">{{ 'sylius.ui.dashboard'|trans }}</a></li>
-                <li class="breadcrumb-item active">Mondial Relay</li>
-            </ol>
-        </nav>
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0">
-                <i class="fas fa-chart-bar me-2"></i>
-                Mondial Relay Dashboard
-            </h1>
+<div class="page">
+    {# Sidebar #}
+    <aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+        <div class="container-fluid">
+            {% hook 'sylius_admin.common.component.sidebar' with { _prefixes: [] } %}
         </div>
+    </aside>
 
-        <div class="alert alert-info" role="alert">
-            <h5 class="alert-heading">
-                <i class="fas fa-clock me-2"></i>
-                {{ 'kiora_sylius_mondial_relay.ui.dashboard.coming_soon'|trans|default('Coming Soon') }}
-            </h5>
-            <p class="mb-0">{{ 'kiora_sylius_mondial_relay.ui.dashboard.coming_soon_text'|trans|default('The dashboard with statistics and monitoring is under development.') }}</p>
-        </div>
+    <div class="page-wrapper">
+        {# Navbar #}
+        {% hook 'sylius_admin.common.component.navbar' with { _prefixes: [] } %}
 
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
+        {# Page content #}
+        <div class="page-body">
+            <div class="container-xl">
+                {# Breadcrumb #}
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">{{ 'sylius.ui.dashboard'|trans }}</a></li>
+                        <li class="breadcrumb-item active">Mondial Relay</li>
+                    </ol>
+                </nav>
+
+                {# Page header #}
+                <div class="page-header d-print-none mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <h2 class="page-title">
+                                Mondial Relay Dashboard
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+
+                {# Content #}
+                <div class="alert alert-info" role="alert">
+                    <h5 class="alert-heading">
+                        {{ 'kiora_sylius_mondial_relay.ui.dashboard.coming_soon'|trans|default('Coming Soon') }}
+                    </h5>
+                    <p class="mb-0">{{ 'kiora_sylius_mondial_relay.ui.dashboard.coming_soon_text'|trans|default('The dashboard with statistics and monitoring is under development.') }}</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                {{ 'kiora_sylius_mondial_relay.ui.dashboard.recent_shipments'|trans|default('Recent Shipments') }}
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">
+                                    {{ 'kiora_sylius_mondial_relay.ui.dashboard.placeholder_description'|trans|default('Dashboard features will be available in a future release.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                {{ 'kiora_sylius_mondial_relay.ui.dashboard.statistics'|trans|default('Statistics') }}
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">
+                                    {{ 'kiora_sylius_mondial_relay.ui.dashboard.placeholder_description'|trans|default('Dashboard features will be available in a future release.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
                     <div class="card-header">
-                        <i class="fas fa-shipping-fast me-2"></i>
-                        {{ 'kiora_sylius_mondial_relay.ui.dashboard.recent_shipments'|trans|default('Recent Shipments') }}
+                        {{ 'kiora_sylius_mondial_relay.ui.dashboard.planned_features'|trans|default('Planned Features') }}
                     </div>
                     <div class="card-body">
-                        <p class="text-muted">
-                            <i class="fas fa-info-circle me-2"></i>
-                            {{ 'kiora_sylius_mondial_relay.ui.dashboard.placeholder_description'|trans|default('Dashboard features will be available in a future release.') }}
-                        </p>
+                        <ul class="mb-0">
+                            <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.shipment_tracking'|trans|default('Real-time shipment tracking') }}</li>
+                            <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.statistics'|trans|default('Delivery statistics and analytics') }}</li>
+                            <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.bulk_operations'|trans|default('Bulk label generation') }}</li>
+                            <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.error_monitoring'|trans|default('Error monitoring and alerts') }}</li>
+                        </ul>
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header">
-                        <i class="fas fa-chart-line me-2"></i>
-                        {{ 'kiora_sylius_mondial_relay.ui.dashboard.statistics'|trans|default('Statistics') }}
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">
-                            <i class="fas fa-info-circle me-2"></i>
-                            {{ 'kiora_sylius_mondial_relay.ui.dashboard.placeholder_description'|trans|default('Dashboard features will be available in a future release.') }}
-                        </p>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-list me-2"></i>
-                {{ 'kiora_sylius_mondial_relay.ui.dashboard.planned_features'|trans|default('Planned Features') }}
-            </div>
-            <div class="card-body">
-                <ul class="mb-0">
-                    <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.shipment_tracking'|trans|default('Real-time shipment tracking') }}</li>
-                    <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.statistics'|trans|default('Delivery statistics and analytics') }}</li>
-                    <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.bulk_operations'|trans|default('Bulk label generation') }}</li>
-                    <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.error_monitoring'|trans|default('Error monitoring and alerts') }}</li>
-                </ul>
-            </div>
-        </div>
-    </main>
-
-    {% hook 'sylius_admin.common.index#footer' %}
+        {# Footer #}
+        {% hook 'sylius_admin.common.component.footer' with { _prefixes: [] } %}
+    </div>
 </div>
 {% endblock %}
