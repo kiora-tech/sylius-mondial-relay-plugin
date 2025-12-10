@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         failOnRisky="true"
+         failOnWarning="true"
+         cacheDirectory=".phpunit.cache"
+         beStrictAboutOutputDuringTests="true"
+         beStrictAboutTodoAnnotatedTests="true">
+
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+        <exclude>
+            <directory>src/DependencyInjection</directory>
+            <file>src/KioraSyliusMondialRelayPlugin.php</file>
+        </exclude>
+    </source>
+
+    <coverage>
+        <report>
+            <html outputDirectory="var/coverage/html"/>
+            <clover outputFile="var/coverage/clover.xml"/>
+            <text outputFile="php://stdout" showOnlySummary="true"/>
+        </report>
+    </coverage>
+
+    <php>
+        <ini name="display_errors" value="1"/>
+        <ini name="error_reporting" value="-1"/>
+        <server name="KERNEL_CLASS" value="Kiora\SyliusMondialRelayPlugin\Tests\Application\Kernel"/>
+        <server name="APP_ENV" value="test"/>
+        <server name="SHELL_VERBOSITY" value="-1"/>
+    </php>
+</phpunit>

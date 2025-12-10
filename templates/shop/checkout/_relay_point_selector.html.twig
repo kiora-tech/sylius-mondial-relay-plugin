@@ -1,0 +1,191 @@
+{#
+/**
+ * Mondial Relay Point Selector Widget
+ *
+ * Main template for the relay point selection widget in Sylius checkout.
+ * Integrates with Stimulus controllers for interactive functionality.
+ *
+ * Context variables:
+ * - shipment: ShipmentInterface - Current shipment
+ * - order: OrderInterface - Current order
+ * - shippingAddress: AddressInterface - Shipping address
+ * - searchCriteria: array - Initial search parameters
+ * - selectedRelayPoint: array|null - Previously selected relay point
+ */
+#}
+
+{% set shipping_address = order.shippingAddress %}
+{% set initial_postal_code = searchCriteria.postalCode ?? shipping_address.postcode %}
+{% set initial_city = searchCriteria.city ?? shipping_address.city %}
+{% set initial_country = searchCriteria.countryCode ?? shipping_address.countryCode %}
+
+<div class="mr-widget"
+     data-controller="relay-point-selector relay-point-map"
+     data-relay-point-selector-search-url-value="{{ path('kiora_sylius_mondial_relay_relay_point_search') }}"
+     data-relay-point-selector-select-url-value="{{ path('kiora_sylius_mondial_relay_relay_point_select', {'shipmentId': '__ID__'}) }}"
+     data-relay-point-selector-shipment-id-value="{{ shipment.id }}"
+     data-relay-point-selector-initial-postal-code-value="{{ initial_postal_code }}"
+     data-relay-point-selector-initial-city-value="{{ initial_city }}"
+     data-relay-point-selector-initial-country-code-value="{{ initial_country }}"
+     {% if selectedRelayPoint %}data-relay-point-selector-selected-relay-point-id-value="{{ selectedRelayPoint.relay_point_id }}"{% endif %}
+     data-relay-point-map-latitude-value="{{ shipping_address.latitude ?? 48.8566 }}"
+     data-relay-point-map-longitude-value="{{ shipping_address.longitude ?? 2.3522 }}"
+     data-relay-point-map-zoom-value="12">
+
+    {# Widget Header #}
+    <div class="mr-widget-header">
+        <h3 class="mr-widget-title">
+            {{ 'kiora_sylius_mondial_relay.widget.title'|trans }}
+        </h3>
+        <p class="mr-widget-description">
+            {{ 'kiora_sylius_mondial_relay.widget.description'|trans }}
+        </p>
+    </div>
+
+    {# Search Form #}
+    <form class="mr-search-form"
+          data-relay-point-selector-target="searchForm"
+          data-action="submit->relay-point-selector#search">
+
+        <div class="mr-search-input-group">
+            <label for="mr-search-postal-code" class="mr-search-label">
+                {{ 'kiora_sylius_mondial_relay.widget.search.postal_code'|trans }}
+            </label>
+            <input type="text"
+                   id="mr-search-postal-code"
+                   name="postalCode"
+                   class="mr-search-input"
+                   placeholder="{{ 'kiora_sylius_mondial_relay.widget.search.postal_code_placeholder'|trans }}"
+                   value="{{ initial_postal_code }}"
+                   required
+                   maxlength="10"
+                   data-relay-point-selector-target="searchInput">
+        </div>
+
+        <div class="mr-search-input-group">
+            <label for="mr-search-city" class="mr-search-label">
+                {{ 'kiora_sylius_mondial_relay.widget.search.city'|trans }}
+                <span class="text-muted">({{ 'kiora_sylius_mondial_relay.widget.optional'|trans }})</span>
+            </label>
+            <input type="text"
+                   id="mr-search-city"
+                   name="city"
+                   class="mr-search-input"
+                   placeholder="{{ 'kiora_sylius_mondial_relay.widget.search.city_placeholder'|trans }}"
+                   value="{{ initial_city }}"
+                   maxlength="100">
+        </div>
+
+        <div class="mr-search-input-group">
+            <label class="sr-only" for="mr-search-radius">
+                {{ 'kiora_sylius_mondial_relay.widget.search.radius'|trans }}
+            </label>
+            <button type="submit"
+                    class="mr-search-button"
+                    id="mr-search-button">
+                {{ 'kiora_sylius_mondial_relay.widget.search.button'|trans }}
+            </button>
+        </div>
+    </form>
+
+    {# Loading Indicator #}
+    <div class="mr-loading-indicator hidden"
+         data-relay-point-selector-target="loadingIndicator"
+         aria-live="polite">
+        <div class="mr-loading-spinner" role="status">
+            <span class="sr-only">{{ 'kiora_sylius_mondial_relay.widget.loading'|trans }}</span>
+        </div>
+        <span class="mr-loading-text">{{ 'kiora_sylius_mondial_relay.widget.loading'|trans }}</span>
+    </div>
+
+    {# Error Message #}
+    <div class="mr-error-message hidden"
+         data-relay-point-selector-target="errorMessage"
+         role="alert">
+    </div>
+
+    {# View Toggle (Desktop only) #}
+    <div class="mr-view-toggle d-none d-lg-flex">
+        <button type="button"
+                class="mr-view-toggle-button active"
+                data-view="list"
+                data-relay-point-selector-target="viewToggle"
+                data-action="click->relay-point-selector#toggleView"
+                aria-pressed="true">
+            <span aria-hidden="true">📋</span>
+            {{ 'kiora_sylius_mondial_relay.widget.view.list'|trans }}
+        </button>
+        <button type="button"
+                class="mr-view-toggle-button"
+                data-view="map"
+                data-relay-point-selector-target="viewToggle"
+                data-action="click->relay-point-selector#toggleView"
+                aria-pressed="false">
+            <span aria-hidden="true">🗺️</span>
+            {{ 'kiora_sylius_mondial_relay.widget.view.map'|trans }}
+        </button>
+    </div>
+
+    {# Content Container #}
+    <div class="mr-content">
+
+        {# Map View (Desktop) #}
+        <div class="mr-map-view"
+             data-relay-point-selector-target="mapView">
+            <div class="mr-map-container"
+                 data-relay-point-map-target="container"
+                 role="region"
+                 aria-label="{{ 'kiora_sylius_mondial_relay.widget.map.label'|trans }}">
+            </div>
+        </div>
+
+        {# List View #}
+        <div class="mr-list-view"
+             data-relay-point-selector-target="listView">
+            <div class="mr-list-container"
+                 data-relay-point-selector-target="listContainer"
+                 role="list"
+                 aria-label="{{ 'kiora_sylius_mondial_relay.widget.list.label'|trans }}">
+                {# Relay points will be rendered here by JavaScript #}
+                <div class="mr-no-results">
+                    <p>{{ 'kiora_sylius_mondial_relay.widget.list.initial_message'|trans }}</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# Selected Relay Point Info #}
+    {% if selectedRelayPoint %}
+        <div class="mr-selected-relay-point"
+             data-relay-point-selector-target="selectedInfo">
+            <h4>{{ 'kiora_sylius_mondial_relay.widget.selected.title'|trans }}</h4>
+            <div class="mr-selected-details">
+                <p class="mr-selected-name">{{ selectedRelayPoint.name }}</p>
+                <p class="mr-selected-address">
+                    {{ selectedRelayPoint.address.street }}<br>
+                    {{ selectedRelayPoint.address.postal_code }} {{ selectedRelayPoint.address.city }}
+                </p>
+            </div>
+            <button type="button"
+                    class="mr-change-button"
+                    data-action="click->relay-point-selector#showWidget">
+                {{ 'kiora_sylius_mondial_relay.widget.selected.change'|trans }}
+            </button>
+        </div>
+    {% else %}
+        <div class="mr-selected-relay-point hidden"
+             data-relay-point-selector-target="selectedInfo">
+            {# Will be populated by JavaScript when a relay point is selected #}
+        </div>
+    {% endif %}
+
+</div>
+
+{# Include Leaflet CSS from CDN #}
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="anonymous" />
+
+{# Note: Leaflet JS should be loaded via importmap or Webpack Encore #}

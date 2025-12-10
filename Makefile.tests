@@ -1,0 +1,173 @@
+# Makefile pour les tests PHPUnit - Kiora Sylius Mondial Relay Plugin
+
+.PHONY: help test test-unit test-integration coverage coverage-html coverage-text clean install
+
+# Chemins
+PHPUNIT := vendor/bin/phpunit
+COVERAGE_DIR := var/coverage
+
+# Couleurs pour l'affichage
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
+
+help: ## Afficher l'aide
+	@echo "$(GREEN)Commandes disponibles pour les tests :$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
+
+install: ## Installer les dépendances
+	@echo "$(GREEN)Installation des dépendances...$(NC)"
+	composer install --prefer-dist --no-interaction
+	@echo "$(GREEN)✓ Installation terminée$(NC)"
+
+install-ignore: ## Installer avec ignore platform reqs
+	@echo "$(YELLOW)Installation avec ignore platform requirements...$(NC)"
+	composer install --prefer-dist --no-interaction --ignore-platform-reqs
+	@echo "$(GREEN)✓ Installation terminée$(NC)"
+
+test: ## Exécuter tous les tests
+	@echo "$(GREEN)Exécution de tous les tests...$(NC)"
+	$(PHPUNIT) --colors=always
+
+test-unit: ## Exécuter les tests unitaires
+	@echo "$(GREEN)Exécution des tests unitaires...$(NC)"
+	$(PHPUNIT) --testsuite Unit --colors=always
+
+test-integration: ## Exécuter les tests d'intégration
+	@echo "$(GREEN)Exécution des tests d'intégration...$(NC)"
+	$(PHPUNIT) --testsuite Integration --colors=always
+
+test-verbose: ## Exécuter les tests en mode verbose
+	@echo "$(GREEN)Exécution des tests (verbose)...$(NC)"
+	$(PHPUNIT) --verbose --colors=always
+
+test-debug: ## Exécuter les tests en mode debug
+	@echo "$(GREEN)Exécution des tests (debug)...$(NC)"
+	$(PHPUNIT) --verbose --debug --colors=always
+
+test-api: ## Tester uniquement l'API client
+	@echo "$(GREEN)Tests API Client...$(NC)"
+	$(PHPUNIT) tests/Unit/Api/Client/MondialRelayApiClientTest.php --colors=always
+
+test-dto: ## Tester uniquement les DTOs
+	@echo "$(GREEN)Tests DTOs...$(NC)"
+	$(PHPUNIT) tests/Unit/Api/DTO/ --colors=always
+
+test-entity: ## Tester uniquement les entités
+	@echo "$(GREEN)Tests Entités...$(NC)"
+	$(PHPUNIT) tests/Unit/Entity/ --colors=always
+
+test-validator: ## Tester uniquement les validateurs
+	@echo "$(GREEN)Tests Validateurs...$(NC)"
+	$(PHPUNIT) tests/Unit/Validator/ --colors=always
+
+test-form: ## Tester uniquement les formulaires
+	@echo "$(GREEN)Tests Formulaires...$(NC)"
+	$(PHPUNIT) tests/Unit/Form/ --colors=always
+
+coverage: coverage-html coverage-text ## Générer la couverture de code complète
+
+coverage-html: ## Générer la couverture HTML
+	@echo "$(GREEN)Génération de la couverture HTML...$(NC)"
+	@mkdir -p $(COVERAGE_DIR)/html
+	$(PHPUNIT) --coverage-html $(COVERAGE_DIR)/html
+	@echo "$(GREEN)✓ Couverture HTML générée dans $(COVERAGE_DIR)/html/index.html$(NC)"
+
+coverage-text: ## Afficher la couverture en texte
+	@echo "$(GREEN)Couverture de code :$(NC)"
+	$(PHPUNIT) --coverage-text
+
+coverage-clover: ## Générer la couverture Clover (CI)
+	@echo "$(GREEN)Génération de la couverture Clover...$(NC)"
+	@mkdir -p $(COVERAGE_DIR)
+	$(PHPUNIT) --coverage-clover $(COVERAGE_DIR)/clover.xml
+	@echo "$(GREEN)✓ Couverture Clover générée dans $(COVERAGE_DIR)/clover.xml$(NC)"
+
+coverage-xml: ## Générer la couverture XML (PHPUnit format)
+	@echo "$(GREEN)Génération de la couverture XML...$(NC)"
+	@mkdir -p $(COVERAGE_DIR)
+	$(PHPUNIT) --coverage-xml $(COVERAGE_DIR)/xml
+	@echo "$(GREEN)✓ Couverture XML générée dans $(COVERAGE_DIR)/xml/$(NC)"
+
+filter: ## Exécuter un test spécifique (usage: make filter TEST=testMethodName)
+	@echo "$(GREEN)Exécution du test filtré : $(TEST)$(NC)"
+	$(PHPUNIT) --filter $(TEST) --colors=always
+
+watch: ## Exécuter les tests en mode watch (nécessite inotify-tools)
+	@echo "$(YELLOW)Mode watch activé. Appuyez sur Ctrl+C pour arrêter.$(NC)"
+	@while true; do \
+		inotifywait -e modify -r src/ tests/; \
+		clear; \
+		echo "$(GREEN)Fichiers modifiés, relance des tests...$(NC)"; \
+		$(PHPUNIT) --colors=always; \
+	done
+
+clean: ## Nettoyer les fichiers de couverture et cache
+	@echo "$(YELLOW)Nettoyage...$(NC)"
+	rm -rf $(COVERAGE_DIR)
+	rm -rf .phpunit.cache
+	@echo "$(GREEN)✓ Nettoyage terminé$(NC)"
+
+clean-all: clean ## Nettoyer tout (incluant vendor)
+	@echo "$(YELLOW)Nettoyage complet...$(NC)"
+	rm -rf vendor
+	rm -f composer.lock
+	@echo "$(GREEN)✓ Nettoyage complet terminé$(NC)"
+
+check: ## Vérifier que PHPUnit est installé
+	@if [ -f $(PHPUNIT) ]; then \
+		echo "$(GREEN)✓ PHPUnit installé : $$($(PHPUNIT) --version)$(NC)"; \
+	else \
+		echo "$(RED)✗ PHPUnit non trouvé. Exécutez 'make install'$(NC)"; \
+		exit 1; \
+	fi
+
+stats: ## Afficher les statistiques des tests
+	@echo "$(GREEN)Statistiques des tests :$(NC)"
+	@echo "Fichiers de test : $$(find tests -name '*Test.php' | wc -l)"
+	@echo "Tests unitaires : $$(grep -r 'public function test' tests/Unit | wc -l)"
+	@echo "Lignes de code de test : $$(find tests -name '*.php' -exec cat {} \; | wc -l)"
+
+bootstrap: ## Vérifier le bootstrap
+	@echo "$(GREEN)Vérification du bootstrap...$(NC)"
+	@if [ -f tests/bootstrap.php ]; then \
+		echo "$(GREEN)✓ Bootstrap trouvé$(NC)"; \
+	else \
+		echo "$(RED)✗ Bootstrap non trouvé$(NC)"; \
+		exit 1; \
+	fi
+
+lint-tests: ## Vérifier la syntaxe des tests
+	@echo "$(GREEN)Vérification de la syntaxe des tests...$(NC)"
+	@find tests -name '*.php' -exec php -l {} \; | grep -v "No syntax errors"
+	@echo "$(GREEN)✓ Syntaxe OK$(NC)"
+
+parallel: ## Exécuter les tests en parallèle (nécessite paratest)
+	@echo "$(GREEN)Exécution des tests en parallèle...$(NC)"
+	vendor/bin/paratest --processes=4 --colors
+
+quick: ## Tests rapides sans couverture
+	@echo "$(GREEN)Tests rapides...$(NC)"
+	$(PHPUNIT) --no-coverage --colors=always
+
+ci: clean install test coverage-clover ## Pipeline CI complet
+	@echo "$(GREEN)✓ Pipeline CI terminé$(NC)"
+
+ci-ignore: clean install-ignore test coverage-clover ## Pipeline CI avec ignore platform
+	@echo "$(GREEN)✓ Pipeline CI terminé (ignore platform)$(NC)"
+
+benchmark: ## Benchmark des tests
+	@echo "$(GREEN)Benchmark des tests...$(NC)"
+	$(PHPUNIT) --log-junit $(COVERAGE_DIR)/junit.xml
+	@echo "$(GREEN)✓ Résultats dans $(COVERAGE_DIR)/junit.xml$(NC)
+
+open-coverage: ## Ouvrir la couverture HTML dans le navigateur
+	@if [ -f $(COVERAGE_DIR)/html/index.html ]; then \
+		echo "$(GREEN)Ouverture de la couverture...$(NC)"; \
+		xdg-open $(COVERAGE_DIR)/html/index.html 2>/dev/null || open $(COVERAGE_DIR)/html/index.html 2>/dev/null || echo "$(YELLOW)Ouvrez manuellement : $(COVERAGE_DIR)/html/index.html$(NC)"; \
+	else \
+		echo "$(RED)✗ Couverture non générée. Exécutez 'make coverage-html' d'abord$(NC)"; \
+	fi
+
+.DEFAULT_GOAL := help

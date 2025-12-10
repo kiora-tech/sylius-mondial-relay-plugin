@@ -1,0 +1,64 @@
+# Configuration routes
+kiora_sylius_mondial_relay_admin_configuration_index:
+    path: /admin/mondial-relay/configuration
+    methods: [GET, POST]
+    defaults:
+        _controller: Kiora\SyliusMondialRelayPlugin\Controller\Admin\ConfigurationController::indexAction
+        _sylius:
+            section: admin
+            permission: true
+            template: '@KioraSyliusMondialRelayPlugin/admin/configuration/index.html.twig'
+
+kiora_sylius_mondial_relay_admin_configuration_test_connection:
+    path: /admin/mondial-relay/configuration/test-connection
+    methods: [POST]
+    defaults:
+        _controller: Kiora\SyliusMondialRelayPlugin\Controller\Admin\ConfigurationController::testConnectionAction
+        _sylius:
+            section: admin
+            permission: true
+
+# Dashboard routes (placeholder)
+kiora_sylius_mondial_relay_admin_dashboard_index:
+    path: /admin/mondial-relay/dashboard
+    methods: [GET]
+    defaults:
+        _controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
+        template: '@KioraSyliusMondialRelayPlugin/admin/dashboard/index.html.twig'
+        _sylius:
+            section: admin
+            permission: true
+
+# Shipment action routes
+kiora_sylius_mondial_relay_admin_shipment_generate_label:
+    path: /admin/mondial-relay/shipments/{shipmentId}/generate-label
+    methods: [POST, GET]
+    requirements:
+        shipmentId: \d+
+    defaults:
+        _controller: Kiora\SyliusMondialRelayPlugin\Controller\Admin\ShipmentController::generateLabelAction
+        _sylius:
+            section: admin
+            permission: true
+
+kiora_sylius_mondial_relay_admin_shipment_download_label:
+    path: /admin/mondial-relay/shipments/{shipmentId}/download-label
+    methods: [GET]
+    requirements:
+        shipmentId: \d+
+    defaults:
+        _controller: Kiora\SyliusMondialRelayPlugin\Controller\Admin\ShipmentController::downloadLabelAction
+        _sylius:
+            section: admin
+            permission: true
+
+kiora_sylius_mondial_relay_admin_shipment_generate_qr_code:
+    path: /admin/mondial-relay/shipments/{shipmentId}/generate-qr-code
+    methods: [POST, GET]
+    requirements:
+        shipmentId: \d+
+    defaults:
+        _controller: Kiora\SyliusMondialRelayPlugin\Controller\Admin\ShipmentController::generateQrCodeAction
+        _sylius:
+            section: admin
+            permission: true

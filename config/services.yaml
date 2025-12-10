@@ -1,0 +1,119 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Service namespace for autowiring
+    Kiora\SyliusMondialRelayPlugin\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Api/DTO/'
+            - '../src/Api/Exception/'
+
+    # HTTP Client for Mondial Relay API
+    kiora_sylius_mondial_relay.http_client:
+        class: Symfony\Component\HttpClient\HttpClient
+        factory: ['Symfony\Component\HttpClient\HttpClient', 'create']
+        arguments:
+            - base_uri: 'https://api.mondialrelay.com/v2/'
+              timeout: '%kiora_sylius_mondial_relay.http_timeout%'
+              max_redirects: 0
+              headers:
+                  'Accept': 'application/json'
+                  'Content-Type': 'application/json'
+
+    # Cache pool for API responses
+    kiora_sylius_mondial_relay.cache:
+        class: Symfony\Component\Cache\Adapter\FilesystemAdapter
+        arguments:
+            - 'mondial_relay'
+            - '%kiora_sylius_mondial_relay.cache_ttl%'
+
+    # Mondial Relay API Client
+    Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient:
+        arguments:
+            $apiKey: '%env(MONDIAL_RELAY_API_KEY)%'
+            $apiSecret: '%env(MONDIAL_RELAY_API_SECRET)%'
+            $sandbox: '%env(bool:MONDIAL_RELAY_SANDBOX)%'
+            $httpClient: '@kiora_sylius_mondial_relay.http_client'
+            $logger: '@logger'
+            $timeout: '%kiora_sylius_mondial_relay.http_timeout%'
+            $enableRetry: true
+        tags:
+            - { name: 'monolog.logger', channel: 'mondial_relay' }
+
+    # Interface alias for dependency injection
+    Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClientInterface:
+        alias: Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient
+
+    # Alias for easy injection
+    Symfony\Contracts\HttpClient\HttpClientInterface $mondialRelayClient: '@kiora_sylius_mondial_relay.http_client'
+    Symfony\Contracts\Cache\CacheInterface $mondialRelayCache: '@kiora_sylius_mondial_relay.cache'
+
+    # Controllers
+    Kiora\SyliusMondialRelayPlugin\Controller\Admin\ConfigurationController:
+        arguments:
+            $requestConfigurationFactory: '@sylius.resource_controller.request_configuration_factory'
+            $translator: '@translator'
+            $mondialRelayApiV2Service: '@Kiora\SyliusMondialRelayPlugin\Service\MondialRelayApiV2Service'
+            $configFilePath: '%kernel.project_dir%/config/mondial_relay.json'
+        tags: ['controller.service_arguments']
+
+    Kiora\SyliusMondialRelayPlugin\Controller\Admin\ShipmentController:
+        arguments:
+            $shipmentRepository: '@sylius.repository.shipment'
+            $labelGenerator: '@Kiora\SyliusMondialRelayPlugin\Service\MondialRelayLabelGenerator'
+            $qrCodeGenerator: '@Kiora\SyliusMondialRelayPlugin\Service\MondialRelayQrCodeGenerator'
+            $translator: '@translator'
+        tags: ['controller.service_arguments']
+
+    # Menu Listener
+    Kiora\SyliusMondialRelayPlugin\Menu\AdminMenuListener:
+        tags:
+            - { name: kernel.event_listener, event: sylius.menu.admin.main, method: addAdminMenuItems }
+            - { name: kernel.event_listener, event: sylius.menu.admin.order.show, method: addOrderShowMenuItems }
+
+    # Services
+    Kiora\SyliusMondialRelayPlugin\Service\MondialRelayApiV2Service:
+        arguments:
+            $apiClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient'
+            $logger: '@monolog.logger.mondial_relay'
+
+    Kiora\SyliusMondialRelayPlugin\Service\MondialRelayLabelGenerator:
+        arguments:
+            $apiClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient'
+            $logger: '@monolog.logger.mondial_relay'
+            $labelsDirectory: '%kernel.project_dir%/var/mondial_relay/labels'
+
+    Kiora\SyliusMondialRelayPlugin\Service\MondialRelayLabelGeneratorInterface:
+        alias: Kiora\SyliusMondialRelayPlugin\Service\MondialRelayLabelGenerator
+
+    Kiora\SyliusMondialRelayPlugin\Service\MondialRelayQrCodeGenerator:
+        arguments:
+            $logger: '@monolog.logger.mondial_relay'
+            $qrCodesDirectory: '%kernel.project_dir%/public/media/mondial_relay/qrcodes'
+            $qrCodesPublicPath: '/media/mondial_relay/qrcodes'
+
+    Kiora\SyliusMondialRelayPlugin\Service\MondialRelayQrCodeGeneratorInterface:
+        alias: Kiora\SyliusMondialRelayPlugin\Service\MondialRelayQrCodeGenerator
+
+    # Shop Controllers (for relay point widget)
+    Kiora\SyliusMondialRelayPlugin\Controller\Shop\RelayPointController:
+        arguments:
+            $apiClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient'
+            $shipmentRepository: '@sylius.repository.shipment'
+            $orderRepository: '@sylius.repository.order'
+            $logger: '@monolog.logger.mondial_relay'
+        tags: ['controller.service_arguments']
+
+    # Twig Hook for relay point selector widget
+    Kiora\SyliusMondialRelayPlugin\Twig\Hook\RelayPointSelectorHook:
+        tags:
+            - name: 'sylius.twig_hooks.hook_template'
+              hook: 'sylius_shop.checkout.complete.shipments.form'
+              template: '@KioraSyliusMondialRelayPlugin/shop/checkout/_relay_point_selector.html.twig'
+              priority: 0

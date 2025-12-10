@@ -1,0 +1,128 @@
+kiora_sylius_mondial_relay:
+    ui:
+        menu:
+            main: Mondial Relay
+            configuration: Configuration
+            dashboard: Dashboard
+            shipments: Shipments
+
+        configuration: Mondial Relay Configuration
+        configuration_subtitle: Configure your Mondial Relay API credentials and settings
+        configuration_saved_successfully: Configuration saved successfully
+        configuration_save_error: 'Error saving configuration: %error%'
+
+        api_credentials: API Credentials
+        api_credentials_help: You can obtain your API credentials from the Mondial Relay Connect portal
+        default_settings: Default Settings
+        documentation: Documentation
+        api_documentation: API Documentation
+        developer_portal: Developer Portal
+        help: Need Help?
+        help_text: Contact Mondial Relay support if you need assistance with your API credentials or integration.
+
+        test_connection: Test Connection
+        test_connection.testing: Testing connection to Mondial Relay API...
+        test_connection.success: Connection successful! Your credentials are valid.
+        test_connection.failed: 'Connection failed: %error%'
+        test_connection.exception: 'Error testing connection: %error%'
+        test_connection.missing_credentials: Please provide all required credentials
+        test_connection.error: An error occurred while testing the connection
+
+        dashboard: Mondial Relay Dashboard
+        dashboard_subtitle: Overview of your Mondial Relay shipments and statistics
+        dashboard.coming_soon: Dashboard Coming Soon
+        dashboard.coming_soon_text: The Mondial Relay dashboard is currently under development and will be available in a future update.
+        dashboard.recent_shipments: Recent Shipments
+        dashboard.statistics: Statistics
+        dashboard.placeholder_title: Planned Features
+        dashboard.placeholder_description: 'The dashboard will include:'
+        dashboard.feature.shipment_tracking: Real-time shipment tracking
+        dashboard.feature.statistics: Detailed statistics and reports
+        dashboard.feature.bulk_operations: Bulk operations for shipments
+        dashboard.feature.error_monitoring: Error monitoring and alerts
+
+        mondial_relay_information: Mondial Relay Information
+        relay_point_id: Relay Point ID
+        relay_point_name: Relay Point Name
+        relay_point_address: Address
+        qr_code: QR Code
+
+        generate_label: Generate Label
+        download_label: Download Label
+        generate_qr_code: Generate QR Code
+        error_occurred: An error occurred
+        shipment_not_shipped_warning: This shipment has not been marked as shipped yet.
+
+        shipment:
+            label_generated_successfully: Label generated successfully
+            label_generation_failed: 'Label generation failed: %error%'
+            label_generation_exception: 'Error generating label: %error%'
+            label_not_found: Label not found. Please generate it first.
+            label_download_exception: 'Error downloading label: %error%'
+            qr_code_generated_successfully: QR code generated successfully
+            qr_code_generation_failed: 'QR code generation failed: %error%'
+            qr_code_generation_exception: 'Error generating QR code: %error%'
+
+    form:
+        configuration:
+            api_key: API Key
+            api_key_placeholder: Enter your Mondial Relay API key
+            api_secret: API Secret
+            api_secret_placeholder: Enter your Mondial Relay API secret
+            brand_id: Brand ID
+            brand_id_placeholder: e.g. BDTEST
+            brand_id_help: Your Mondial Relay brand identifier (2-8 uppercase alphanumeric characters)
+            sandbox: Sandbox Mode
+            sandbox_help: Enable sandbox mode for testing (uses test API endpoint)
+            default_weight: Default Weight (grams)
+            default_weight_help: Default package weight in grams (used when no weight is specified)
+            default_collection_mode: Default Collection Mode
+            default_collection_mode_help: Default shipping method for Mondial Relay
+
+        shipping_gateway:
+            collection_mode: Collection Mode
+            collection_mode_help: Mondial Relay delivery mode (24R = Relay Point, HOM = Home Delivery, etc.)
+            max_weight: Maximum Weight (grams)
+            max_weight_help: Maximum package weight allowed for this shipping method
+            enabled_countries: Enabled Countries
+            enabled_countries_help: Countries where this shipping method is available
+            allow_customer_selection: Customer Selection
+            customer_selection.enabled: Allow customers to select their relay point
+            customer_selection.disabled: Automatically assign relay point
+            allow_customer_selection_help: If enabled, customers can choose their preferred relay point during checkout
+            max_relay_points: Maximum Relay Points
+            max_relay_points_help: Maximum number of relay points to display to customers
+
+    collection_mode:
+        24r: '24R - Delivery to Relay Point'
+        24l: '24L - Delivery to Locker'
+        24x: '24X - Express Delivery to Relay Point'
+        rel: 'REL - Standard Relay Point'
+        ld1: 'LD1 - Home Delivery'
+        lds: 'LDS - Home Delivery with Signature'
+        hom: 'HOM - Home Delivery'
+        drive: 'DRI - Drive'
+
+    validation:
+        api_key:
+            not_blank: API key is required
+            min_length: API key must be at least 8 characters long
+        api_secret:
+            not_blank: API secret is required
+            min_length: API secret must be at least 8 characters long
+        brand_id:
+            not_blank: Brand ID is required
+            invalid_format: Brand ID must be 2-8 uppercase alphanumeric characters
+        default_weight:
+            not_blank: Default weight is required
+            range: Weight must be between 1g and 150kg (150000g)
+        max_weight:
+            not_blank: Maximum weight is required
+            range: Weight must be between 1g and 150kg (150000g)
+        enabled_countries:
+            not_blank: At least one country must be enabled
+            min_count: At least one country must be selected
+            invalid_choice: Invalid country selected
+        max_relay_points:
+            not_blank: Maximum relay points is required
+            range: Value must be between 1 and 20

@@ -1,0 +1,161 @@
+{# Mondial Relay information block for order detail page #}
+{% set mondialRelayShipment = null %}
+{% for shipment in order.shipments %}
+    {% set method = shipment.method %}
+    {% if method and method.gateway and 'mondial' in method.gateway.gatewayName|lower %}
+        {% set mondialRelayShipment = shipment %}
+    {% endif %}
+{% endfor %}
+
+{% if mondialRelayShipment %}
+<div class="ui segment" id="mondial-relay-info">
+    <h4 class="ui dividing header">
+        <i class="shipping fast icon"></i>
+        {{ 'kiora_sylius_mondial_relay.ui.mondial_relay_information'|trans }}
+    </h4>
+
+    <div class="ui stackable grid">
+        <div class="eight wide column">
+            <table class="ui very basic table">
+                <tbody>
+                    {% if mondialRelayShipment.relayPointId is defined and mondialRelayShipment.relayPointId %}
+                    <tr>
+                        <td class="five wide">
+                            <strong>{{ 'kiora_sylius_mondial_relay.ui.relay_point_id'|trans }}:</strong>
+                        </td>
+                        <td>
+                            <span class="ui label">{{ mondialRelayShipment.relayPointId }}</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if mondialRelayShipment.relayPointName is defined and mondialRelayShipment.relayPointName %}
+                    <tr>
+                        <td>
+                            <strong>{{ 'kiora_sylius_mondial_relay.ui.relay_point_name'|trans }}:</strong>
+                        </td>
+                        <td>{{ mondialRelayShipment.relayPointName }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if mondialRelayShipment.relayPointAddress is defined and mondialRelayShipment.relayPointAddress %}
+                    <tr>
+                        <td>
+                            <strong>{{ 'kiora_sylius_mondial_relay.ui.relay_point_address'|trans }}:</strong>
+                        </td>
+                        <td>
+                            {{ mondialRelayShipment.relayPointAddress|nl2br }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if mondialRelayShipment.tracking %}
+                    <tr>
+                        <td>
+                            <strong>{{ 'sylius.ui.tracking_code'|trans }}:</strong>
+                        </td>
+                        <td>
+                            <code>{{ mondialRelayShipment.tracking }}</code>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="eight wide column">
+            {% if mondialRelayShipment.qrCodePath is defined and mondialRelayShipment.qrCodePath %}
+            <div class="ui center aligned segment">
+                <h5 class="ui header">{{ 'kiora_sylius_mondial_relay.ui.qr_code'|trans }}</h5>
+                <img src="{{ asset(mondialRelayShipment.qrCodePath) }}"
+                     alt="{{ 'kiora_sylius_mondial_relay.ui.qr_code'|trans }}"
+                     class="ui small centered image"
+                     style="max-width: 200px;">
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <div class="ui buttons">
+        {% if not mondialRelayShipment.tracking %}
+        <a href="{{ path('kiora_sylius_mondial_relay_admin_shipment_generate_label', {'shipmentId': mondialRelayShipment.id}) }}"
+           class="ui labeled icon button"
+           data-requires-confirmation>
+            <i class="print icon"></i>
+            {{ 'kiora_sylius_mondial_relay.ui.generate_label'|trans }}
+        </a>
+        {% else %}
+        <a href="{{ path('kiora_sylius_mondial_relay_admin_shipment_download_label', {'shipmentId': mondialRelayShipment.id}) }}"
+           class="ui labeled icon primary button"
+           target="_blank">
+            <i class="download icon"></i>
+            {{ 'kiora_sylius_mondial_relay.ui.download_label'|trans }}
+        </a>
+        {% endif %}
+
+        {% if not (mondialRelayShipment.qrCodePath is defined and mondialRelayShipment.qrCodePath) %}
+        <button type="button"
+                class="ui labeled icon button generate-qr-code"
+                data-shipment-id="{{ mondialRelayShipment.id }}"
+                data-url="{{ path('kiora_sylius_mondial_relay_admin_shipment_generate_qr_code', {'shipmentId': mondialRelayShipment.id}) }}">
+            <i class="qrcode icon"></i>
+            {{ 'kiora_sylius_mondial_relay.ui.generate_qr_code'|trans }}
+        </button>
+        {% endif %}
+    </div>
+
+    {% if mondialRelayShipment.state != 'shipped' %}
+    <div class="ui warning message">
+        <i class="warning sign icon"></i>
+        {{ 'kiora_sylius_mondial_relay.ui.shipment_not_shipped_warning'|trans }}
+    </div>
+    {% endif %}
+</div>
+
+{% block javascripts %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.generate-qr-code').on('click', function(e) {
+            e.preventDefault();
+
+            var $btn = $(this);
+            var shipmentId = $btn.data('shipment-id');
+            var url = $btn.data('url');
+
+            $btn.addClass('loading disabled');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    $btn.removeClass('loading disabled');
+
+                    if (response.success) {
+                        // Reload page to show QR code
+                        window.location.reload();
+                    } else {
+                        alert(response.message || '{{ 'kiora_sylius_mondial_relay.ui.error_occurred'|trans }}');
+                    }
+                },
+                error: function(xhr) {
+                    $btn.removeClass('loading disabled');
+
+                    var errorMessage = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : '{{ 'kiora_sylius_mondial_relay.ui.error_occurred'|trans }}';
+
+                    alert(errorMessage);
+                }
+            });
+        });
+
+        $('[data-requires-confirmation]').on('click', function(e) {
+            return confirm('{{ 'sylius.ui.confirm'|trans }}');
+        });
+    });
+</script>
+{% endblock %}
+{% endif %}

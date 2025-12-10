@@ -1,0 +1,74 @@
+{% extends '@SyliusAdmin/layout.html.twig' %}
+
+{% block title %}{{ 'kiora_sylius_mondial_relay.ui.dashboard'|trans }} {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="ui stackable two column grid">
+    <div class="column">
+        <h1 class="ui header">
+            <i class="chart bar icon"></i>
+            <div class="content">
+                {{ 'kiora_sylius_mondial_relay.ui.dashboard'|trans }}
+                <div class="sub header">{{ 'kiora_sylius_mondial_relay.ui.dashboard_subtitle'|trans }}</div>
+            </div>
+        </h1>
+    </div>
+</div>
+
+<div class="ui stackable grid">
+    <div class="sixteen wide column">
+        <div class="ui segment">
+            <div class="ui icon message">
+                <i class="notched circle loading icon"></i>
+                <div class="content">
+                    <div class="header">
+                        {{ 'kiora_sylius_mondial_relay.ui.dashboard.coming_soon'|trans }}
+                    </div>
+                    <p>{{ 'kiora_sylius_mondial_relay.ui.dashboard.coming_soon_text'|trans }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="eight wide column">
+        <div class="ui segment">
+            <h3 class="ui header">
+                <i class="shipping icon"></i>
+                {{ 'kiora_sylius_mondial_relay.ui.dashboard.recent_shipments'|trans }}
+            </h3>
+            <p class="ui placeholder">
+                <span class="line"></span>
+                <span class="line"></span>
+                <span class="line"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="eight wide column">
+        <div class="ui segment">
+            <h3 class="ui header">
+                <i class="chart line icon"></i>
+                {{ 'kiora_sylius_mondial_relay.ui.dashboard.statistics'|trans }}
+            </h3>
+            <p class="ui placeholder">
+                <span class="line"></span>
+                <span class="line"></span>
+                <span class="line"></span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="ui info message">
+    <div class="header">
+        {{ 'kiora_sylius_mondial_relay.ui.dashboard.placeholder_title'|trans }}
+    </div>
+    <p>{{ 'kiora_sylius_mondial_relay.ui.dashboard.placeholder_description'|trans }}</p>
+    <ul class="list">
+        <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.shipment_tracking'|trans }}</li>
+        <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.statistics'|trans }}</li>
+        <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.bulk_operations'|trans }}</li>
+        <li>{{ 'kiora_sylius_mondial_relay.ui.dashboard.feature.error_monitoring'|trans }}</li>
+    </ul>
+</div>
+{% endblock %}

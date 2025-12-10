@@ -1,0 +1,246 @@
+kiora_sylius_mondial_relay:
+    ui:
+        menu:
+            main: Mondial Relay
+            configuration: Configuration
+            dashboard: Tableau de bord
+            shipments: Expéditions
+
+        configuration: Configuration Mondial Relay
+        configuration_subtitle: Configurez vos identifiants API et paramètres Mondial Relay
+        configuration_saved_successfully: Configuration enregistrée avec succès
+        configuration_save_error: 'Erreur lors de l''enregistrement de la configuration : %error%'
+
+        api_credentials: Identifiants API
+        api_credentials_help: Vous pouvez obtenir vos identifiants API depuis le portail Mondial Relay Connect
+        default_settings: Paramètres par défaut
+        documentation: Documentation
+        api_documentation: Documentation API
+        developer_portal: Portail Développeur
+        help: Besoin d'aide ?
+        help_text: Contactez le support Mondial Relay si vous avez besoin d'assistance avec vos identifiants API ou votre intégration.
+
+        test_connection: Tester la connexion
+        test_connection.testing: Test de connexion à l'API Mondial Relay en cours...
+        test_connection.success: Connexion réussie ! Vos identifiants sont valides.
+        test_connection.failed: 'Échec de la connexion : %error%'
+        test_connection.exception: 'Erreur lors du test de connexion : %error%'
+        test_connection.missing_credentials: Veuillez fournir tous les identifiants requis
+        test_connection.error: Une erreur s'est produite lors du test de connexion
+
+        dashboard: Tableau de bord Mondial Relay
+        dashboard_subtitle: Vue d'ensemble de vos expéditions et statistiques Mondial Relay
+        dashboard.coming_soon: Tableau de bord bientôt disponible
+        dashboard.coming_soon_text: Le tableau de bord Mondial Relay est actuellement en développement et sera disponible dans une prochaine mise à jour.
+        dashboard.recent_shipments: Expéditions récentes
+        dashboard.statistics: Statistiques
+        dashboard.placeholder_title: Fonctionnalités prévues
+        dashboard.placeholder_description: 'Le tableau de bord inclura :'
+        dashboard.feature.shipment_tracking: Suivi des expéditions en temps réel
+        dashboard.feature.statistics: Statistiques et rapports détaillés
+        dashboard.feature.bulk_operations: Opérations groupées pour les expéditions
+        dashboard.feature.error_monitoring: Surveillance et alertes d'erreurs
+
+        mondial_relay_information: Informations Mondial Relay
+        relay_point_id: ID Point Relais
+        relay_point_name: Nom du Point Relais
+        relay_point_address: Adresse
+        qr_code: QR Code
+
+        generate_label: Générer l'étiquette
+        download_label: Télécharger l'étiquette
+        generate_qr_code: Générer le QR Code
+        error_occurred: Une erreur s'est produite
+        shipment_not_shipped_warning: Cette expédition n'a pas encore été marquée comme expédiée.
+
+        shipment:
+            label_generated_successfully: Étiquette générée avec succès
+            label_generation_failed: 'Échec de la génération de l''étiquette : %error%'
+            label_generation_exception: 'Erreur lors de la génération de l''étiquette : %error%'
+            label_not_found: Étiquette non trouvée. Veuillez la générer d'abord.
+            label_download_exception: 'Erreur lors du téléchargement de l''étiquette : %error%'
+            qr_code_generated_successfully: QR code généré avec succès
+            qr_code_generation_failed: 'Échec de la génération du QR code : %error%'
+            qr_code_generation_exception: 'Erreur lors de la génération du QR code : %error%'
+
+    form:
+        configuration:
+            api_key: Clé API
+            api_key_placeholder: Saisissez votre clé API Mondial Relay
+            api_secret: Secret API
+            api_secret_placeholder: Saisissez votre secret API Mondial Relay
+            brand_id: ID Marque
+            brand_id_placeholder: ex. BDTEST
+            brand_id_help: Votre identifiant de marque Mondial Relay (2-8 caractères alphanumériques majuscules)
+            sandbox: Mode Sandbox
+            sandbox_help: Activer le mode sandbox pour les tests (utilise l'endpoint API de test)
+            default_weight: Poids par défaut (grammes)
+            default_weight_help: Poids du colis par défaut en grammes (utilisé quand aucun poids n'est spécifié)
+            default_collection_mode: Mode de livraison par défaut
+            default_collection_mode_help: Mode de livraison par défaut pour Mondial Relay
+
+        shipping_gateway:
+            collection_mode: Mode de livraison
+            collection_mode_help: Mode de livraison Mondial Relay (24R = Point Relais, HOM = Livraison à domicile, etc.)
+            max_weight: Poids maximum (grammes)
+            max_weight_help: Poids maximum du colis autorisé pour cette méthode de livraison
+            enabled_countries: Pays activés
+            enabled_countries_help: Pays où cette méthode de livraison est disponible
+            allow_customer_selection: Sélection par le client
+            customer_selection.enabled: Permettre aux clients de sélectionner leur point relais
+            customer_selection.disabled: Assigner automatiquement le point relais
+            allow_customer_selection_help: Si activé, les clients peuvent choisir leur point relais préféré lors du paiement
+            max_relay_points: Nombre maximum de points relais
+            max_relay_points_help: Nombre maximum de points relais à afficher aux clients
+
+    collection_mode:
+        24r: '24R - Livraison en Point Relais'
+        24l: '24L - Livraison en Consigne'
+        24x: '24X - Livraison Express en Point Relais'
+        rel: 'REL - Point Relais Standard'
+        ld1: 'LD1 - Livraison à domicile'
+        lds: 'LDS - Livraison à domicile avec signature'
+        hom: 'HOM - Livraison à domicile'
+        drive: 'DRI - Drive'
+
+    validation:
+        api_key:
+            not_blank: La clé API est requise
+            min_length: La clé API doit contenir au moins 8 caractères
+        api_secret:
+            not_blank: Le secret API est requis
+            min_length: Le secret API doit contenir au moins 8 caractères
+        brand_id:
+            not_blank: L'ID marque est requis
+            invalid_format: L'ID marque doit contenir 2-8 caractères alphanumériques majuscules
+        default_weight:
+            not_blank: Le poids par défaut est requis
+            range: Le poids doit être entre 1g et 150kg (150000g)
+        max_weight:
+            not_blank: Le poids maximum est requis
+            range: Le poids doit être entre 1g et 150kg (150000g)
+        enabled_countries:
+            not_blank: Au moins un pays doit être activé
+            min_count: Au moins un pays doit être sélectionné
+            invalid_choice: Pays invalide sélectionné
+        max_relay_points:
+            not_blank: Le nombre maximum de points relais est requis
+            range: La valeur doit être entre 1 et 20
+
+    # Widget de sélection de point relais
+    widget:
+        title: "Choisir un point relais Mondial Relay"
+        description: "Sélectionnez le point relais le plus proche de chez vous pour récupérer votre commande."
+        optional: "optionnel"
+        loading: "Chargement en cours..."
+
+        # Formulaire de recherche
+        search:
+            postal_code: "Code postal"
+            postal_code_placeholder: "Ex: 75001"
+            city: "Ville"
+            city_placeholder: "Ex: Paris"
+            radius: "Rayon de recherche"
+            button: "Rechercher"
+
+        # Basculement de vue
+        view:
+            list: "Vue liste"
+            map: "Vue carte"
+
+        # Carte
+        map:
+            label: "Carte des points relais Mondial Relay"
+            user_location: "Votre adresse de livraison"
+
+        # Liste
+        list:
+            label: "Liste des points relais Mondial Relay"
+            initial_message: "Cliquez sur 'Rechercher' pour afficher les points relais disponibles."
+            no_results: "Aucun point relais trouvé dans cette zone."
+            no_results_hint: "Essayez d'élargir votre recherche ou vérifiez votre code postal."
+
+        # Point relais sélectionné
+        selected:
+            title: "Point relais sélectionné"
+            change: "Changer de point relais"
+            select_button: "Sélectionner"
+            selected_button: "Sélectionné"
+
+        # Distance
+        distance:
+            km: "%distance% km"
+            meters: "%distance% m"
+
+        # Horaires d'ouverture
+        opening_hours:
+            title: "Horaires d'ouverture"
+            monday: "Lundi"
+            tuesday: "Mardi"
+            wednesday: "Mercredi"
+            thursday: "Jeudi"
+            friday: "Vendredi"
+            saturday: "Samedi"
+            sunday: "Dimanche"
+            closed: "Fermé"
+            morning: "Matin"
+            afternoon: "Après-midi"
+
+        # Services
+        services:
+            parking: "Parking disponible"
+            wheelchair_accessible: "Accessible PMR"
+            air_conditioned: "Climatisé"
+
+        # Messages d'erreur
+        errors:
+            search_failed: "Impossible de rechercher les points relais. Veuillez réessayer."
+            selection_failed: "Impossible de sélectionner ce point relais. Veuillez réessayer."
+            no_postal_code: "Le code postal est requis."
+            invalid_postal_code: "Le code postal est invalide."
+            network_error: "Erreur de connexion. Veuillez vérifier votre connexion internet."
+            api_error: "Une erreur s'est produite. Veuillez réessayer plus tard."
+            not_found: "Point relais introuvable."
+            access_denied: "Accès non autorisé."
+
+        # Messages de succès
+        success:
+            selected: "Point relais sélectionné avec succès."
+            changed: "Point relais modifié avec succès."
+
+        # Actions
+        actions:
+            select: "Sélectionner"
+            view_details: "Voir les détails"
+            view_on_map: "Voir sur la carte"
+            get_directions: "Itinéraire"
+
+        # Validation
+        validation:
+            required: "Ce champ est requis."
+            relay_point_required: "Veuillez sélectionner un point relais avant de continuer."
+
+    # Méthode de livraison
+    shipping_method:
+        mondial_relay: "Mondial Relay - Point relais"
+        mondial_relay_description: "Livraison en point relais Mondial Relay sous 2-5 jours ouvrés."
+
+    # Email
+    email:
+        relay_point:
+            title: "Point relais de retrait"
+            pickup_at: "À retirer chez :"
+            address: "Adresse"
+            opening_hours: "Horaires"
+
+    # Commun
+    common:
+        yes: "Oui"
+        no: "Non"
+        close: "Fermer"
+        cancel: "Annuler"
+        save: "Enregistrer"
+        search: "Rechercher"
+        loading: "Chargement..."
+        error: "Erreur"
+        success: "Succès"

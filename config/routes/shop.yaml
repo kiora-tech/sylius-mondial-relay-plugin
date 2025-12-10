@@ -1,0 +1,21 @@
+# Kiora Sylius Mondial Relay Plugin - Shop Routes
+#
+# Routes for the customer-facing relay point selector widget in checkout.
+
+# Search relay points near customer's shipping address
+kiora_sylius_mondial_relay_relay_point_search:
+    path: /checkout/mondial-relay/search
+    methods: [GET]
+    controller: Kiora\SyliusMondialRelayPlugin\Controller\Shop\RelayPointController::searchAction
+    options:
+        expose: true # Make route accessible to JavaScript
+
+# Select a relay point for shipment
+kiora_sylius_mondial_relay_relay_point_select:
+    path: /checkout/mondial-relay/select/{shipmentId}
+    methods: [POST]
+    controller: Kiora\SyliusMondialRelayPlugin\Controller\Shop\RelayPointController::selectAction
+    requirements:
+        shipmentId: \d+
+    options:
+        expose: true # Make route accessible to JavaScript

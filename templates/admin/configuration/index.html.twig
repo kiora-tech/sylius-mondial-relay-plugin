@@ -1,0 +1,186 @@
+{% extends '@SyliusAdmin/layout.html.twig' %}
+
+{% block title %}{{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }} {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="ui stackable two column grid">
+    <div class="column">
+        <h1 class="ui header">
+            <i class="cog icon"></i>
+            <div class="content">
+                {{ 'kiora_sylius_mondial_relay.ui.configuration'|trans }}
+                <div class="sub header">{{ 'kiora_sylius_mondial_relay.ui.configuration_subtitle'|trans }}</div>
+            </div>
+        </h1>
+    </div>
+</div>
+
+<div class="ui stackable grid">
+    <div class="twelve wide column">
+        <div class="ui segment">
+            {{ form_start(form, {'attr': {'class': 'ui loadable form', 'novalidate': 'novalidate'}}) }}
+
+                <div class="ui segment">
+                    <h4 class="ui dividing header">{{ 'kiora_sylius_mondial_relay.ui.api_credentials'|trans }}</h4>
+
+                    <div class="two fields">
+                        <div class="field">
+                            {{ form_row(form.api_key) }}
+                        </div>
+                        <div class="field">
+                            {{ form_row(form.api_secret) }}
+                        </div>
+                    </div>
+
+                    <div class="two fields">
+                        <div class="field">
+                            {{ form_row(form.brand_id) }}
+                        </div>
+                        <div class="field">
+                            {{ form_row(form.sandbox) }}
+                        </div>
+                    </div>
+
+                    <div class="ui info message">
+                        <i class="info circle icon"></i>
+                        {{ 'kiora_sylius_mondial_relay.ui.api_credentials_help'|trans }}
+                    </div>
+
+                    <button type="button" id="test-connection-btn" class="ui labeled icon button">
+                        <i class="plug icon"></i>
+                        {{ 'kiora_sylius_mondial_relay.ui.test_connection'|trans }}
+                    </button>
+                </div>
+
+                <div class="ui segment">
+                    <h4 class="ui dividing header">{{ 'kiora_sylius_mondial_relay.ui.default_settings'|trans }}</h4>
+
+                    <div class="two fields">
+                        <div class="field">
+                            {{ form_row(form.default_weight) }}
+                        </div>
+                        <div class="field">
+                            {{ form_row(form.default_collection_mode) }}
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="ui labeled icon primary button">
+                    <i class="save icon"></i>
+                    {{ 'sylius.ui.save_changes'|trans }}
+                </button>
+
+                <a href="{{ path('sylius_admin_dashboard') }}" class="ui button">
+                    {{ 'sylius.ui.cancel'|trans }}
+                </a>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="four wide column">
+        <div class="ui segment">
+            <h4 class="ui header">
+                <i class="info circle icon"></i>
+                {{ 'kiora_sylius_mondial_relay.ui.documentation'|trans }}
+            </h4>
+
+            <div class="ui list">
+                <div class="item">
+                    <i class="book icon"></i>
+                    <div class="content">
+                        <a href="https://www.mondialrelay.fr/media/624438/documentation-api-v2.pdf" target="_blank">
+                            {{ 'kiora_sylius_mondial_relay.ui.api_documentation'|trans }}
+                        </a>
+                    </div>
+                </div>
+                <div class="item">
+                    <i class="code icon"></i>
+                    <div class="content">
+                        <a href="https://connect.mondialrelay.com/" target="_blank">
+                            {{ 'kiora_sylius_mondial_relay.ui.developer_portal'|trans }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui segment">
+            <h4 class="ui header">
+                <i class="question circle icon"></i>
+                {{ 'kiora_sylius_mondial_relay.ui.help'|trans }}
+            </h4>
+
+            <p>{{ 'kiora_sylius_mondial_relay.ui.help_text'|trans }}</p>
+        </div>
+    </div>
+</div>
+
+<div id="test-connection-modal" class="ui modal">
+    <div class="header">
+        {{ 'kiora_sylius_mondial_relay.ui.test_connection'|trans }}
+    </div>
+    <div class="content">
+        <div class="ui active centered inline loader"></div>
+        <p id="test-connection-message"></p>
+    </div>
+    <div class="actions">
+        <div class="ui cancel button">
+            {{ 'sylius.ui.close'|trans }}
+        </div>
+    </div>
+</div>
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#test-connection-btn').on('click', function(e) {
+                e.preventDefault();
+
+                var $btn = $(this);
+                var $modal = $('#test-connection-modal');
+                var $message = $('#test-connection-message');
+
+                // Get form values
+                var apiKey = $('#{{ form.api_key.vars.id }}').val();
+                var apiSecret = $('#{{ form.api_secret.vars.id }}').val();
+                var brandId = $('#{{ form.brand_id.vars.id }}').val();
+                var sandbox = $('#{{ form.sandbox.vars.id }}').is(':checked');
+
+                // Show modal with loader
+                $message.text('{{ 'kiora_sylius_mondial_relay.ui.test_connection.testing'|trans }}');
+                $('.ui.loader', $modal).show();
+                $modal.modal('show');
+
+                // Make AJAX request
+                $.ajax({
+                    url: '{{ path('kiora_sylius_mondial_relay_admin_configuration_test_connection') }}',
+                    method: 'POST',
+                    data: {
+                        api_key: apiKey,
+                        api_secret: apiSecret,
+                        brand_id: brandId,
+                        sandbox: sandbox
+                    },
+                    success: function(response) {
+                        $('.ui.loader', $modal).hide();
+                        if (response.success) {
+                            $message.html('<div class="ui positive message"><i class="check circle icon"></i>' + response.message + '</div>');
+                        } else {
+                            $message.html('<div class="ui negative message"><i class="times circle icon"></i>' + response.message + '</div>');
+                        }
+                    },
+                    error: function(xhr) {
+                        $('.ui.loader', $modal).hide();
+                        var errorMessage = xhr.responseJSON && xhr.responseJSON.message
+                            ? xhr.responseJSON.message
+                            : '{{ 'kiora_sylius_mondial_relay.ui.test_connection.error'|trans }}';
+                        $message.html('<div class="ui negative message"><i class="times circle icon"></i>' + errorMessage + '</div>');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
+{% endblock %}

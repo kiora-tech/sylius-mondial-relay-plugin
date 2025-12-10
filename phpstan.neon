@@ -1,0 +1,37 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-webmozart-assert/extension.neon
+
+parameters:
+    level: 8
+
+    paths:
+        - src
+
+    excludePaths:
+        - src/DependencyInjection/Configuration.php
+        - tests
+
+    symfony:
+        container_xml_path: tests/Application/var/cache/test/App_KernelTestDebugContainer.xml
+        console_application_loader: tests/Application/console-application-loader.php
+
+    doctrine:
+        objectManagerLoader: tests/Application/doctrine-object-manager-loader.php
+
+    ignoreErrors:
+        # Allow using dynamic properties for flexibility in certain contexts
+        - '#Access to an undefined property#'
+        # Ignore errors related to test fixtures
+        - '#in tests/.*#'
+
+    checkGenericClassInNonGenericObjectType: false
+    checkMissingIterableValueType: false
+
+    reportUnmatchedIgnoredErrors: false
+
+    # Symfony-specific rules
+    symfony:
+        constant_hassers: false
+        container_xml_path: '%rootDir%/../../../var/cache/test/App_KernelTestDebugContainer.xml'
