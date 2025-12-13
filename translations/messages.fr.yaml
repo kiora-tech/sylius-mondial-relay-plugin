@@ -1,10 +1,7 @@
 kiora_sylius_mondial_relay:
     ui:
         menu:
-            main: Mondial Relay
-            configuration: Configuration
-            dashboard: Tableau de bord
-            shipments: Expéditions
+            mondial_relay: Mondial Relay
 
         configuration: Configuration Mondial Relay
         configuration_subtitle: Configurez vos identifiants API et paramètres Mondial Relay
