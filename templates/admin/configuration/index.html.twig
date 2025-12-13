@@ -4,12 +4,12 @@
 
 {% block body %}
     <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
-        {% hook 'sylius_admin.common.index.sidebar' %}
+        {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
     </aside>
 
     <div class="page-wrapper">
         <header class="navbar navbar-expand-md d-none d-lg-flex d-print-none">
-            {% hook 'sylius_admin.common.index.navbar' %}
+            {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
         </header>
 
         <div class="page-body">
