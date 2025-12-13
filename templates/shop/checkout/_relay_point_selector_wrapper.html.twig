@@ -1,0 +1,335 @@
+{#
+/**
+ * Mondial Relay Point Selector Wrapper
+ *
+ * This wrapper template conditionally displays the relay point selector
+ * based on which shipping method is selected.
+ *
+ * The selector is initially hidden and shown via JavaScript when
+ * a Mondial Relay shipping method is selected.
+ *
+ * Context available from hook:
+ * - form: The shipment form (form.shipments[key])
+ * - index: The shipment loop index (1-based)
+ *
+ * We need to get the order from the Sylius context
+ */
+#}
+
+{% set form = hookable_metadata.context.form %}
+{% set index = hookable_metadata.context.index|default(1) %}
+
+{#
+ # Get order from form hierarchy:
+ # - form = shipment form (form.shipments[key])
+ # - form.vars.data = Shipment entity
+ # - form.parent = shipments collection form
+ # - form.parent.parent = main checkout form with Order as data
+ #}
+{% set shipment = form.vars.data %}
+{% set order = form.parent.parent.vars.data %}
+
+{# Only render if we have order and shipment #}
+{% if order and shipment %}
+    {% set shipping_address = order.shippingAddress %}
+    {% set initial_postal_code = shipping_address ? shipping_address.postcode : '' %}
+    {% set initial_city = shipping_address ? shipping_address.city : '' %}
+    {% set initial_country = shipping_address ? shipping_address.countryCode : 'FR' %}
+
+    {# Check if there's already a selected relay point on the shipment #}
+    {% set selected_relay_point = shipment.mondialRelayPickupPoint is defined ? shipment.mondialRelayPickupPoint : null %}
+
+    <div id="mondial-relay-selector-{{ shipment.id }}"
+         class="mondial-relay-selector-container mt-4"
+         data-controller="relay-point-selector relay-point-map"
+         data-relay-point-selector-search-url-value="{{ path('kiora_sylius_mondial_relay_relay_point_search') }}"
+         data-relay-point-selector-select-url-value="{{ path('kiora_sylius_mondial_relay_relay_point_select', {'shipmentId': '__ID__'}) }}"
+         data-relay-point-selector-shipment-id-value="{{ shipment.id }}"
+         data-relay-point-selector-initial-postal-code-value="{{ initial_postal_code }}"
+         data-relay-point-selector-initial-city-value="{{ initial_city }}"
+         data-relay-point-selector-initial-country-code-value="{{ initial_country }}"
+         {% if selected_relay_point %}data-relay-point-selector-selected-relay-point-id-value="{{ selected_relay_point.relayPointId }}"{% endif %}
+         data-relay-point-map-latitude-value="{{ shipping_address.latitude is defined ? shipping_address.latitude : 48.8566 }}"
+         data-relay-point-map-longitude-value="{{ shipping_address.longitude is defined ? shipping_address.longitude : 2.3522 }}"
+         data-relay-point-map-zoom-value="12">
+
+        {# Widget Header #}
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    {{ 'kiora_sylius_mondial_relay.widget.title'|trans|default('Choisir un Point Relais') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    {{ 'kiora_sylius_mondial_relay.widget.description'|trans|default('Sélectionnez le Point Relais où vous souhaitez retirer votre colis.') }}
+                </p>
+
+                {# Search Area - Using div instead of form to avoid nested form issue #}
+                <div class="mr-search-form row g-3 mb-4"
+                     data-relay-point-selector-target="searchForm">
+
+                    <div class="col-md-4">
+                        <label for="mr-search-postal-code-{{ shipment.id }}" class="form-label">
+                            {{ 'kiora_sylius_mondial_relay.widget.search.postal_code'|trans|default('Code Postal') }}
+                        </label>
+                        <input type="text"
+                               id="mr-search-postal-code-{{ shipment.id }}"
+                               name="postalCode"
+                               class="form-control"
+                               placeholder="{{ 'kiora_sylius_mondial_relay.widget.search.postal_code_placeholder'|trans|default('Ex: 75001') }}"
+                               value="{{ initial_postal_code }}"
+                               maxlength="10"
+                               data-relay-point-selector-target="searchInput"
+                               data-action="keydown.enter->relay-point-selector#search">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="mr-search-city-{{ shipment.id }}" class="form-label">
+                            {{ 'kiora_sylius_mondial_relay.widget.search.city'|trans|default('Ville') }}
+                            <span class="text-muted">({{ 'kiora_sylius_mondial_relay.widget.optional'|trans|default('optionnel') }})</span>
+                        </label>
+                        <input type="text"
+                               id="mr-search-city-{{ shipment.id }}"
+                               name="city"
+                               class="form-control"
+                               placeholder="{{ 'kiora_sylius_mondial_relay.widget.search.city_placeholder'|trans|default('Ex: Paris') }}"
+                               value="{{ initial_city }}"
+                               maxlength="100"
+                               data-action="keydown.enter->relay-point-selector#search">
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary w-100"
+                                data-action="click->relay-point-selector#search">
+                            <i class="fas fa-search me-2"></i>
+                            {{ 'kiora_sylius_mondial_relay.widget.search.button'|trans|default('Rechercher') }}
+                        </button>
+                    </div>
+                </div>
+
+                {# Loading Indicator #}
+                <div class="text-center py-4 hidden"
+                     data-relay-point-selector-target="loadingIndicator"
+                     aria-live="polite">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{{ 'kiora_sylius_mondial_relay.widget.loading'|trans|default('Chargement...') }}</span>
+                    </div>
+                    <p class="mt-2 text-muted">{{ 'kiora_sylius_mondial_relay.widget.loading'|trans|default('Recherche des points relais...') }}</p>
+                </div>
+
+                {# Error Message #}
+                <div class="alert alert-danger hidden"
+                     data-relay-point-selector-target="errorMessage"
+                     role="alert">
+                </div>
+
+                {# View Toggle #}
+                <div class="btn-group mb-3 d-none d-lg-flex" role="group" aria-label="Toggle view">
+                    <button type="button"
+                            class="btn btn-outline-secondary active"
+                            data-view="list"
+                            data-relay-point-selector-target="viewToggle"
+                            data-action="click->relay-point-selector#toggleView"
+                            aria-pressed="true">
+                        <i class="fas fa-list me-1"></i>
+                        {{ 'kiora_sylius_mondial_relay.widget.view.list'|trans|default('Liste') }}
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-view="map"
+                            data-relay-point-selector-target="viewToggle"
+                            data-action="click->relay-point-selector#toggleView"
+                            aria-pressed="false">
+                        <i class="fas fa-map me-1"></i>
+                        {{ 'kiora_sylius_mondial_relay.widget.view.map'|trans|default('Carte') }}
+                    </button>
+                </div>
+
+                {# Content Container #}
+                <div class="row">
+                    {# Map View #}
+                    <div class="col-lg-6 hidden"
+                         data-relay-point-selector-target="mapView">
+                        <div class="mr-map-container border rounded"
+                             data-relay-point-map-target="container"
+                             style="height: 400px; width: 100%;"
+                             role="region"
+                             aria-label="{{ 'kiora_sylius_mondial_relay.widget.map.label'|trans|default('Carte des points relais') }}">
+                        </div>
+                    </div>
+
+                    {# List View #}
+                    <div class="col-12"
+                         data-relay-point-selector-target="listView">
+                        <div class="mr-list-container"
+                             data-relay-point-selector-target="listContainer"
+                             role="list"
+                             aria-label="{{ 'kiora_sylius_mondial_relay.widget.list.label'|trans|default('Liste des points relais') }}"
+                             style="max-height: 400px; overflow-y: auto;">
+                            {# Relay points will be rendered here by JavaScript #}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-search fa-3x mb-3"></i>
+                                <p>{{ 'kiora_sylius_mondial_relay.widget.list.initial_message'|trans|default('Cliquez sur "Rechercher" pour trouver les points relais proches de votre adresse.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Selected Relay Point Display #}
+                {% if selected_relay_point %}
+                    <div class="alert alert-success mt-3"
+                         data-relay-point-selector-target="selectedInfo">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ 'kiora_sylius_mondial_relay.widget.selected.title'|trans|default('Point relais sélectionné') }}
+                        </h6>
+                        <p class="mb-1"><strong>{{ selected_relay_point.name }}</strong></p>
+                        <p class="mb-0 small">
+                            {{ selected_relay_point.street }}<br>
+                            {{ selected_relay_point.postalCode }} {{ selected_relay_point.city }}
+                        </p>
+                        <hr>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success"
+                                data-action="click->relay-point-selector#showWidget">
+                            {{ 'kiora_sylius_mondial_relay.widget.selected.change'|trans|default('Changer de point relais') }}
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info mt-3 hidden"
+                         data-relay-point-selector-target="selectedInfo">
+                        {# Will be populated by JavaScript when a relay point is selected #}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# JavaScript to show/hide based on shipping method selection #}
+    <script>
+    (function() {
+        const container = document.getElementById('mondial-relay-selector-{{ shipment.id }}');
+        const shipmentForm = container.closest('[data-sylius-test-html-attribute="shipments"]') ||
+                            container.closest('.mb-5');
+
+        if (!shipmentForm) return;
+
+        // Find all shipping method radio buttons in this shipment
+        const radioButtons = shipmentForm.querySelectorAll('input[type="radio"][name*="method"]');
+
+        function updateVisibility() {
+            const selectedRadio = shipmentForm.querySelector('input[type="radio"][name*="method"]:checked');
+            if (!selectedRadio) {
+                container.style.display = 'none';
+                return;
+            }
+
+            // Get the shipping method code from the label or value
+            const label = selectedRadio.closest('label');
+            const methodName = label ? label.textContent.toLowerCase() : '';
+            const methodValue = selectedRadio.value.toLowerCase();
+
+            // Check if it's a Mondial Relay method
+            const isMondialRelay = methodName.includes('mondial') ||
+                                   methodName.includes('relay') ||
+                                   methodName.includes('point relais') ||
+                                   methodValue.includes('mondial') ||
+                                   methodValue.includes('relay');
+
+            container.style.display = isMondialRelay ? 'block' : 'none';
+
+            // Trigger search on first show
+            if (isMondialRelay && !container.dataset.initialized) {
+                container.dataset.initialized = 'true';
+                // Dispatch custom event to trigger initial search
+                setTimeout(() => {
+                    const event = new CustomEvent('mondial-relay:show');
+                    container.dispatchEvent(event);
+                }, 100);
+            }
+        }
+
+        // Listen for changes
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', updateVisibility);
+        });
+
+        // Initial check
+        updateVisibility();
+    })();
+    </script>
+{% endif %}
+
+{# Leaflet CSS #}
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="anonymous" />
+
+{# Leaflet JS #}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="anonymous"></script>
+
+<style>
+.mondial-relay-selector-container .hidden {
+    display: none !important;
+}
+
+.mondial-relay-selector-container .mr-relay-point-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mondial-relay-selector-container .mr-relay-point-item:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.mondial-relay-selector-container .mr-relay-point-item.selected {
+    border-color: #198754;
+    background-color: #d1e7dd;
+}
+
+.mondial-relay-selector-container .mr-relay-point-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.mondial-relay-selector-container .mr-relay-point-name {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.mondial-relay-selector-container .mr-relay-point-distance {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.mondial-relay-selector-container .mr-relay-point-address {
+    font-size: 0.875rem;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.mondial-relay-selector-container .mr-relay-point-address p {
+    margin: 0;
+}
+
+.mondial-relay-selector-container .mr-relay-point-actions {
+    text-align: right;
+}
+
+.mondial-relay-selector-container .mr-select-button {
+    min-width: 120px;
+}
+</style>
