@@ -8,8 +8,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\RoundBlockSizeMode;
-use Endroid\QrCode\Writer\PngWriter;
 use Kiora\SyliusMondialRelayPlugin\Entity\MondialRelayShipmentInterface;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
@@ -67,18 +65,15 @@ final class MondialRelayQrCodeGenerator implements MondialRelayQrCodeGeneratorIn
             $qrCodeFilename = sprintf('mr-%s.png', $shipment->getId());
             $qrCodePath = sprintf('%s/%s', $this->qrCodesDirectory, $qrCodeFilename);
 
-            $result = Builder::create()
-                ->writer(new PngWriter())
-                ->writerOptions([])
-                ->data($qrData)
-                ->encoding(new Encoding('UTF-8'))
-                ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-                ->size(300)
-                ->margin(10)
-                ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-                ->build()
-            ;
+            $builder = new Builder(
+                data: $qrData,
+                encoding: new Encoding('UTF-8'),
+                errorCorrectionLevel: ErrorCorrectionLevel::High,
+                size: 300,
+                margin: 10,
+            );
 
+            $result = $builder->build();
             $result->saveToFile($qrCodePath);
 
             $qrCodeUrl = sprintf('%s/%s', $this->qrCodesPublicPath, $qrCodeFilename);
