@@ -21,7 +21,8 @@
         "php": "^8.2",
         "sylius/sylius": "^2.0",
         "symfony/cache": "^7.0",
-        "symfony/http-client": "^7.0"
+        "symfony/http-client": "^7.0",
+        "endroid/qr-code": "^6.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.64",
