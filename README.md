@@ -52,53 +52,7 @@ return [
 ];
 ```
 
-### 3. Configure the Plugin
-
-Create `config/packages/kiora_sylius_mondial_relay.yaml`:
-
-```yaml
-kiora_sylius_mondial_relay:
-    # Get these credentials from your Mondial Relay merchant account
-    api_key: '%env(MONDIAL_RELAY_API_KEY)%'
-    api_secret: '%env(MONDIAL_RELAY_API_SECRET)%'
-    brand_id: '%env(MONDIAL_RELAY_BRAND_ID)%'
-
-    # Enable sandbox mode for testing (uses test API endpoints)
-    sandbox: '%env(bool:MONDIAL_RELAY_SANDBOX)%'
-
-    # Optional: Cache configuration
-    cache:
-        enabled: true
-        ttl: 3600  # Cache pickup point searches for 1 hour
-
-    # Optional: HTTP client settings
-    http:
-        timeout: 10
-        max_retries: 3
-
-    # Optional: Default values
-    default_country: 'FR'      # ISO 3166-1 alpha-2 country code
-    default_weight: 1000       # Default package weight in grams
-```
-
-### 4. Set Environment Variables
-
-Add to your `.env` or `.env.local`:
-
-```env
-# REST API v2 (Connect) - For shipment creation and labels
-MONDIAL_RELAY_API_KEY=your_api_key_here
-MONDIAL_RELAY_API_SECRET=your_api_secret_here
-MONDIAL_RELAY_SANDBOX=true
-
-# SOAP API v1 - For relay point search
-MONDIAL_RELAY_ENSEIGNE=your_enseigne_code
-MONDIAL_RELAY_PRIVATE_KEY=your_private_key_for_signature
-```
-
-> **Note**: You need credentials for both APIs. The REST API (Connect) handles shipments and labels, while the SOAP API is required for relay point search as this feature is not available in the REST API.
-
-### 5. Import Routes
+### 3. Import Routes
 
 Create `config/routes/kiora_mondial_relay.yaml`:
 
@@ -112,7 +66,7 @@ kiora_mondial_relay_shop:
     resource: '@KioraSyliusMondialRelayPlugin/config/routes/shop.yaml'
 ```
 
-### 6. Extend Shipment Entity (optional)
+### 4. Extend Shipment Entity (optional)
 
 To store pickup point selections, extend Sylius Shipment entity with the provided trait:
 
@@ -142,40 +96,21 @@ bin/console doctrine:migrations:diff
 bin/console doctrine:migrations:migrate
 ```
 
-### 7. Clear Cache
+### 5. Clear Cache
 
 ```bash
 bin/console cache:clear
 ```
 
-## Configuration Reference
+### 6. Configure API Credentials
 
-### Full Configuration Options
+Navigate to **Admin > Configuration > Mondial Relay** to configure:
 
-```yaml
-kiora_sylius_mondial_relay:
-    # Required: API credentials
-    api_key: string                    # Your Mondial Relay API key
-    api_secret: string                 # Your API secret for request signing
-    brand_id: string                   # Your brand identifier
+- **REST API v2 (Connect)**: API Key, API Secret, Brand ID for shipment creation and labels
+- **SOAP API v1**: Enseigne code and Private Key for relay point search
+- **Sandbox Mode**: Enable/disable test environment
 
-    # Optional: Environment
-    sandbox: false                     # Enable test mode
-
-    # Optional: Cache settings
-    cache:
-        enabled: true                  # Enable API response caching
-        ttl: 3600                      # Cache lifetime in seconds
-
-    # Optional: HTTP client
-    http:
-        timeout: 10                    # Request timeout in seconds
-        max_retries: 3                 # Max retry attempts for failed requests
-
-    # Optional: Defaults
-    default_country: 'FR'              # Default country for searches
-    default_weight: 1000               # Default weight in grams
-```
+The configuration is stored in `config/mondial_relay.json` and can be tested directly from the admin interface.
 
 ## Usage
 
