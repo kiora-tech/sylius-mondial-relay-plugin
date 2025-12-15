@@ -7,6 +7,7 @@ namespace Kiora\SyliusMondialRelayPlugin\DependencyInjection;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 /**
@@ -17,9 +18,19 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
  * - Processes configuration from Configuration class
  * - Sets up Mondial Relay API parameters
  * - Configures caching and HTTP client settings
+ * - Prepends Twig Hooks configuration for admin pages
  */
-final class KioraSyliusMondialRelayExtension extends Extension
+final class KioraSyliusMondialRelayExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * Prepend Twig Hooks configuration for Sylius admin pages.
+     */
+    public function prepend(ContainerBuilder $container): void
+    {
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
+        $loader->load('twig_hooks.yaml');
+    }
+
     /**
      * @param array<string, mixed> $configs
      */

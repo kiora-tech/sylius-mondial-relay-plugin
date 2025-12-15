@@ -1,0 +1,43 @@
+sylius_twig_hooks:
+    hooks:
+        # Main hook for Mondial Relay configuration page
+        # Falls back to sylius_admin.common.index for sidebar/navbar
+        'kiora_sylius_mondial_relay.admin.configuration.index':
+            sidebar:
+                template: '@SyliusAdmin/shared/crud/common/sidebar.html.twig'
+                priority: 200
+            navbar:
+                template: '@SyliusAdmin/shared/crud/common/navbar.html.twig'
+                priority: 100
+            content:
+                template: '@SyliusAdmin/shared/crud/common/content.html.twig'
+                priority: 0
+
+        'kiora_sylius_mondial_relay.admin.configuration.index.content':
+            flashes:
+                template: '@SyliusAdmin/shared/crud/common/content/flashes.html.twig'
+                priority: 300
+            header:
+                template: '@SyliusAdmin/shared/crud/common/content/header.html.twig'
+                priority: 200
+            form:
+                template: '@KioraSyliusMondialRelayPlugin/admin/configuration/content/form.html.twig'
+                priority: 100
+            footer:
+                template: '@SyliusAdmin/shared/crud/common/content/footer.html.twig'
+                priority: -100
+
+        'kiora_sylius_mondial_relay.admin.configuration.index.content.header':
+            breadcrumbs:
+                template: '@KioraSyliusMondialRelayPlugin/admin/configuration/content/header/breadcrumbs.html.twig'
+                priority: 100
+            title_block:
+                template: '@SyliusAdmin/shared/crud/common/content/header/title_block.html.twig'
+                priority: 0
+
+        'kiora_sylius_mondial_relay.admin.configuration.index.content.header.title_block':
+            title:
+                template: '@KioraSyliusMondialRelayPlugin/admin/configuration/content/header/title_block/title.html.twig'
+                priority: 100
+            actions:
+                enabled: false

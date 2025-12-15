@@ -1,0 +1,6 @@
+{% from '@SyliusAdmin/shared/helper/breadcrumbs.html.twig' import breadcrumbs %}
+
+{{ breadcrumbs([
+    { name: 'sylius.ui.dashboard', 'url': path('sylius_admin_dashboard'), 'active': false },
+    { name: 'kiora_sylius_mondial_relay.ui.configuration', 'active': true },
+]) }}
