@@ -1,0 +1,101 @@
+{#
+ # Mondial Relay information block for shipment item in order detail page.
+ # Displays relay point details and QR code generation button.
+ #}
+{% set shipment = hookable_metadata.context.shipment %}
+{% set pickupPoint = shipment.mondialRelayPickupPoint is defined ? shipment.mondialRelayPickupPoint : null %}
+
+{% if pickupPoint %}
+<td class="px-3 py-2" colspan="2">
+    <div class="card border-primary">
+        <div class="card-header bg-primary text-white py-2">
+            <strong>{{ ux_icon('tabler:map-pin', {class: 'icon icon-sm me-1'}) }} {{ 'kiora_sylius_mondial_relay.ui.relay_point'|trans }}</strong>
+        </div>
+        <div class="card-body py-2">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <strong>{{ pickupPoint.name }}</strong>
+                        <span class="badge bg-secondary ms-2">{{ pickupPoint.relayPointId }}</span>
+                    </p>
+                    <p class="mb-1 text-secondary">
+                        {{ pickupPoint.street }}<br>
+                        {{ pickupPoint.postalCode }} {{ pickupPoint.city }}
+                    </p>
+                    {% if shipment.mondialRelayTrackingNumber %}
+                        <p class="mb-0">
+                            <strong>{{ 'sylius.ui.tracking_code'|trans }}:</strong>
+                            <code>{{ shipment.mondialRelayTrackingNumber }}</code>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 text-center">
+                    {% if shipment.mondialRelayLabelUrl %}
+                        <div class="mb-2">
+                            <img src="{{ shipment.mondialRelayLabelUrl }}"
+                                 alt="{{ 'kiora_sylius_mondial_relay.ui.qr_code'|trans }}"
+                                 class="img-fluid"
+                                 style="max-width: 150px;">
+                        </div>
+                        <a href="{{ shipment.mondialRelayLabelUrl }}"
+                           class="btn btn-sm btn-outline-primary"
+                           target="_blank"
+                           download>
+                            {{ ux_icon('tabler:download', {class: 'icon icon-sm me-1'}) }}
+                            {{ 'kiora_sylius_mondial_relay.ui.download_qr_code'|trans }}
+                        </a>
+                    {% else %}
+                        <button type="button"
+                                class="btn btn-sm btn-primary generate-qr-code"
+                                data-shipment-id="{{ shipment.id }}"
+                                data-url="{{ path('kiora_sylius_mondial_relay_admin_shipment_generate_qr_code', {shipmentId: shipment.id}) }}">
+                            {{ ux_icon('tabler:qrcode', {class: 'icon icon-sm me-1'}) }}
+                            {{ 'kiora_sylius_mondial_relay.ui.generate_qr_code'|trans }}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</td>
+
+<script>
+(function() {
+    document.querySelectorAll('.generate-qr-code').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            var shipmentId = this.dataset.shipmentId;
+            var url = this.dataset.url;
+            var button = this;
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {{ "kiora_sylius_mondial_relay.ui.generating"|trans }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || '{{ "kiora_sylius_mondial_relay.ui.qr_code_error"|trans }}');
+                    button.disabled = false;
+                    button.innerHTML = '{{ ux_icon("tabler:qrcode", {class: "icon icon-sm me-1"})|e("js") }} {{ "kiora_sylius_mondial_relay.ui.generate_qr_code"|trans }}';
+                }
+            })
+            .catch(function(error) {
+                alert('{{ "kiora_sylius_mondial_relay.ui.qr_code_error"|trans }}');
+                button.disabled = false;
+                button.innerHTML = '{{ ux_icon("tabler:qrcode", {class: "icon icon-sm me-1"})|e("js") }} {{ "kiora_sylius_mondial_relay.ui.generate_qr_code"|trans }}';
+            });
+        });
+    });
+})();
+</script>
+{% endif %}

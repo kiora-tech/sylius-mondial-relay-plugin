@@ -113,6 +113,7 @@ services:
             $soapClient: '@Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelaySoapClient'
             $shipmentRepository: '@sylius.repository.shipment'
             $orderRepository: '@sylius.repository.order'
+            $entityManager: '@doctrine.orm.entity_manager'
             $logger: '@monolog.logger.mondial_relay'
         tags: ['controller.service_arguments']
 

@@ -41,3 +41,9 @@ sylius_twig_hooks:
                 priority: 100
             actions:
                 enabled: false
+
+        # Hook to display Mondial Relay pickup point info in order shipments
+        'sylius_admin.order.show.content.sections.shipments.item':
+            mondial_relay:
+                template: '@KioraSyliusMondialRelayPlugin/admin/order/show/content/sections/shipments/item/mondial_relay.html.twig'
+                priority: 50
