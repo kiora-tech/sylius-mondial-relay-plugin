@@ -8,15 +8,16 @@ A comprehensive Mondial Relay integration plugin for Sylius 2.x, providing picku
 
 ## Features
 
-- 🗺️ **Pickup Point Selection**: Interactive map widget for customers to choose relay points
-- 📦 **Shipping Calculator**: Dynamic shipping cost calculation based on weight and destination
-- 🔌 **Mondial Relay API v2**: Full integration with the latest REST API
-  - Type-safe HTTP client with HMAC-SHA256 authentication
-  - Automatic retry with exponential backoff
-  - Comprehensive error handling with translated messages
-  - Support for all delivery modes (24R, DRI, LD1, LDS, HOM)
-- 🎫 **Label Generation**: Automatic shipping label generation with QR code support
-- 📊 **Admin Interface**: Manage shipments and view pickup point assignments
+- 🗺️ **Pickup Point Selection**: Interactive widget for customers to choose relay points during checkout
+- 📦 **Dual API Support**:
+  - **REST API v2 (Connect)**: For shipment creation, label generation with Basic Auth
+  - **SOAP API v1**: For relay point search (WSI4_PointRelais_Recherche)
+- 🎫 **Label & QR Code Generation**: Automatic shipping labels with QR codes for drop-off
+- 📊 **Admin Interface**:
+  - Configuration page for API credentials
+  - Relay point details in order view
+  - QR code generation from admin panel
+- 🔌 **Sylius 2 Twig Hooks**: Native integration with Sylius 2 hook system
 - ⚡ **Performance**: Built-in caching for API responses
 - 🧪 **Sandbox Mode**: Test integration without affecting production
 - 🔒 **Type Safety**: PHP 8.2+ with readonly classes and strict typing
@@ -85,19 +86,63 @@ kiora_sylius_mondial_relay:
 Add to your `.env` or `.env.local`:
 
 ```env
+# REST API v2 (Connect) - For shipment creation and labels
 MONDIAL_RELAY_API_KEY=your_api_key_here
 MONDIAL_RELAY_API_SECRET=your_api_secret_here
-MONDIAL_RELAY_BRAND_ID=your_brand_id_here
 MONDIAL_RELAY_SANDBOX=true
+
+# SOAP API v1 - For relay point search
+MONDIAL_RELAY_ENSEIGNE=your_enseigne_code
+MONDIAL_RELAY_PRIVATE_KEY=your_private_key_for_signature
 ```
 
-### 5. Install Assets (if applicable)
+> **Note**: You need credentials for both APIs. The REST API (Connect) handles shipments and labels, while the SOAP API is required for relay point search as this feature is not available in the REST API.
+
+### 5. Import Routes
+
+Create `config/routes/kiora_mondial_relay.yaml`:
+
+```yaml
+# Admin routes (configuration, shipment actions)
+kiora_mondial_relay_admin:
+    resource: '@KioraSyliusMondialRelayPlugin/config/routes/admin.yaml'
+
+# Shop routes (relay point search/select during checkout)
+kiora_mondial_relay_shop:
+    resource: '@KioraSyliusMondialRelayPlugin/config/routes/shop.yaml'
+```
+
+### 6. Extend Shipment Entity (optional)
+
+To store pickup point selections, extend Sylius Shipment entity with the provided trait:
+
+```php
+<?php
+// src/Entity/Shipping/Shipment.php
+
+namespace App\Entity\Shipping;
+
+use Doctrine\ORM\Mapping as ORM;
+use Kiora\SyliusMondialRelayPlugin\Entity\MondialRelayShipmentInterface;
+use Kiora\SyliusMondialRelayPlugin\Entity\MondialRelayShipmentTrait;
+use Sylius\Component\Core\Model\Shipment as BaseShipment;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'sylius_shipment')]
+class Shipment extends BaseShipment implements MondialRelayShipmentInterface
+{
+    use MondialRelayShipmentTrait;
+}
+```
+
+Then run migrations:
 
 ```bash
-bin/console assets:install --symlink
+bin/console doctrine:migrations:diff
+bin/console doctrine:migrations:migrate
 ```
 
-### 6. Clear Cache
+### 7. Clear Cache
 
 ```bash
 bin/console cache:clear
@@ -206,36 +251,48 @@ make check
 ```
 kiora-sylius-mondial-relay-plugin/
 ├── config/
-│   └── services.yaml                  # Service definitions
-├── docs/
-│   ├── API_CLIENT.md                  # Complete API client documentation
-│   ├── API_CLIENT_SUMMARY.md          # Implementation summary
-│   └── examples/
-│       └── basic-usage.php            # Working code examples
+│   ├── routes/
+│   │   ├── admin.yaml                 # Admin routes (configuration, shipments)
+│   │   └── shop.yaml                  # Shop routes (relay point search/select)
+│   ├── services.yaml                  # Service definitions
+│   └── twig_hooks.yaml                # Sylius 2 Twig Hooks configuration
 ├── src/
 │   ├── Api/
 │   │   ├── Client/
-│   │   │   ├── MondialRelayApiClient.php           # HTTP client implementation
-│   │   │   └── MondialRelayApiClientInterface.php  # Client interface
+│   │   │   ├── MondialRelayApiClient.php      # REST API v2 client
+│   │   │   ├── MondialRelayApiClientInterface.php
+│   │   │   └── MondialRelaySoapClient.php     # SOAP API v1 client
 │   │   ├── DTO/
 │   │   │   ├── RelayPointSearchCriteria.php   # Search parameters
 │   │   │   ├── RelayPointDTO.php              # Relay point data
 │   │   │   ├── RelayPointCollection.php       # Iterable collection
-│   │   │   ├── ShipmentRequest.php            # Shipment creation
-│   │   │   ├── ShipmentResponse.php           # Shipment result
-│   │   │   └── LabelResponse.php              # Label PDF content
+│   │   │   └── ...
 │   │   └── Exception/
-│   │       ├── MondialRelayApiException.php   # Base API exception
-│   │       └── MondialRelayAuthenticationException.php
+│   │       └── MondialRelayApiException.php   # API exceptions
+│   ├── Controller/
+│   │   ├── Admin/
+│   │   │   ├── ConfigurationController.php    # API configuration page
+│   │   │   └── ShipmentController.php         # Label/QR code generation
+│   │   └── Shop/
+│   │       └── RelayPointController.php       # Relay point search/select
+│   ├── Entity/
+│   │   ├── MondialRelayPickupPoint.php        # Pickup point entity
+│   │   └── MondialRelayShipmentTrait.php      # Shipment extension trait
+│   ├── Service/
+│   │   ├── MondialRelayLabelGenerator.php     # Shipping labels
+│   │   └── MondialRelayQrCodeGenerator.php    # QR codes for drop-off
 │   ├── DependencyInjection/
-│   │   ├── Configuration.php          # Plugin configuration tree
+│   │   ├── Configuration.php
 │   │   └── KioraSyliusMondialRelayExtension.php
-│   └── KioraSyliusMondialRelayPlugin.php  # Main bundle class
-├── tests/                             # PHPUnit tests
-├── CHANGELOG.md                       # Version history
+│   └── KioraSyliusMondialRelayPlugin.php
+├── templates/
+│   ├── admin/
+│   │   ├── configuration/             # Admin configuration page templates
+│   │   └── order/show/                # Order detail Mondial Relay info
+│   └── shop/
+│       └── checkout/                  # Relay point selector widget
+├── CHANGELOG.md
 ├── composer.json
-├── Makefile                           # Development commands
-├── phpstan.neon                       # Static analysis config
 └── README.md
 ```
 
