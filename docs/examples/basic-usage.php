@@ -3,13 +3,17 @@
 declare(strict_types=1);
 
 /**
- * Basic usage examples for Mondial Relay API Client
+ * Basic usage examples for Mondial Relay Plugin
  *
- * This file demonstrates common use cases for the Mondial Relay API client.
+ * This plugin uses TWO APIs:
+ * - SOAP API v1: For relay point search (WSI4_PointRelais_Recherche)
+ * - REST API v2 (Connect): For shipment creation and label generation
+ *
  * Copy and adapt these examples to your own services.
  */
 
 use Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelayApiClient;
+use Kiora\SyliusMondialRelayPlugin\Api\Client\MondialRelaySoapClient;
 use Kiora\SyliusMondialRelayPlugin\Api\DTO\RelayPointSearchCriteria;
 use Kiora\SyliusMondialRelayPlugin\Api\DTO\ShipmentRequest;
 use Kiora\SyliusMondialRelayPlugin\Api\Exception\MondialRelayApiException;
@@ -17,14 +21,29 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpClient\HttpClient;
 
 // ============================================================================
-// Example 1: Initialize the API client
+// Example 1: Initialize the SOAP client (for relay point search)
 // ============================================================================
 
-function createApiClient(LoggerInterface $logger): MondialRelayApiClient
+function createSoapClient(LoggerInterface $logger): MondialRelaySoapClient
+{
+    // These credentials are configured via Admin > Configuration > Mondial Relay
+    // Or can be passed directly for testing
+    return new MondialRelaySoapClient(
+        enseigne: 'YOUR_ENSEIGNE_CODE',    // Your Mondial Relay enseigne code
+        privateKey: 'YOUR_PRIVATE_KEY',     // Private key for signature
+        logger: $logger
+    );
+}
+
+// ============================================================================
+// Example 2: Initialize the REST API client (for shipments and labels)
+// ============================================================================
+
+function createRestApiClient(LoggerInterface $logger): MondialRelayApiClient
 {
     return new MondialRelayApiClient(
-        apiKey: $_ENV['MONDIAL_RELAY_API_KEY'],
-        apiSecret: $_ENV['MONDIAL_RELAY_API_SECRET'],
+        apiKey: 'YOUR_API_KEY',
+        apiSecret: 'YOUR_API_SECRET',
         sandbox: true, // Use sandbox for testing
         httpClient: HttpClient::create(),
         logger: $logger,
@@ -34,10 +53,10 @@ function createApiClient(LoggerInterface $logger): MondialRelayApiClient
 }
 
 // ============================================================================
-// Example 2: Search relay points by postal code
+// Example 3: Search relay points by postal code (SOAP API)
 // ============================================================================
 
-function searchByPostalCode(MondialRelayApiClient $client): void
+function searchByPostalCode(MondialRelaySoapClient $client): void
 {
     try {
         // Create search criteria
@@ -49,7 +68,7 @@ function searchByPostalCode(MondialRelayApiClient $client): void
             limit: 10   // Return top 10 results
         );
 
-        // Execute search
+        // Execute search via SOAP API
         $collection = $client->findRelayPoints($criteria);
 
         // Display results
@@ -74,11 +93,6 @@ function searchByPostalCode(MondialRelayApiClient $client): void
                 echo "\n";
             }
 
-            // Display services
-            if (!empty($relayPoint->services)) {
-                echo "Services: " . implode(', ', $relayPoint->services) . "\n";
-            }
-
             echo "\n";
         }
     } catch (MondialRelayApiException $e) {
@@ -88,10 +102,10 @@ function searchByPostalCode(MondialRelayApiClient $client): void
 }
 
 // ============================================================================
-// Example 3: Search relay points by GPS coordinates
+// Example 4: Search relay points by GPS coordinates (SOAP API)
 // ============================================================================
 
-function searchByCoordinates(MondialRelayApiClient $client): void
+function searchByCoordinates(MondialRelaySoapClient $client): void
 {
     try {
         // Paris coordinates
@@ -108,9 +122,6 @@ function searchByCoordinates(MondialRelayApiClient $client): void
         echo "Found {$collection->count()} relay points near Paris center\n";
 
         // Filter results
-        $withParking = $collection->filterByService('parking');
-        echo "With parking: {$withParking->count()}\n";
-
         $nearbyOnly = $collection->filterByMaxDistance(1000); // Within 1km
         echo "Within 1km: {$nearbyOnly->count()}\n";
 
@@ -126,10 +137,10 @@ function searchByCoordinates(MondialRelayApiClient $client): void
 }
 
 // ============================================================================
-// Example 4: Get specific relay point details
+// Example 5: Get specific relay point details (SOAP API)
 // ============================================================================
 
-function getRelayPointDetails(MondialRelayApiClient $client, string $relayPointId): void
+function getRelayPointDetails(MondialRelaySoapClient $client, string $relayPointId): void
 {
     try {
         $relayPoint = $client->getRelayPoint($relayPointId, 'FR');
@@ -158,21 +169,13 @@ function getRelayPointDetails(MondialRelayApiClient $client, string $relayPointI
             }
             echo "\n";
         }
-
-        // Display exceptional closures
-        if (!empty($relayPoint->exceptionalClosures)) {
-            echo "\nExceptional closures:\n";
-            foreach ($relayPoint->exceptionalClosures as $closure) {
-                echo "- {$closure['date']}: {$closure['reason']}\n";
-            }
-        }
     } catch (MondialRelayApiException $e) {
         echo "Error: {$e->getMessage()}\n";
     }
 }
 
 // ============================================================================
-// Example 5: Create a shipment
+// Example 6: Create a shipment (REST API v2)
 // ============================================================================
 
 function createShipment(MondialRelayApiClient $client): void
@@ -223,7 +226,7 @@ function createShipment(MondialRelayApiClient $client): void
 }
 
 // ============================================================================
-// Example 6: Download shipping label
+// Example 7: Download shipping label (REST API v2)
 // ============================================================================
 
 function downloadLabel(MondialRelayApiClient $client, string $expeditionNumber): void
@@ -244,53 +247,8 @@ function downloadLabel(MondialRelayApiClient $client, string $expeditionNumber):
         } else {
             echo "Failed to save label to file\n";
         }
-
-        // Or get as data URI for display in browser
-        // echo $label->getDataUri();
-
-        // Or get as base64
-        // echo $label->getBase64Content();
     } catch (MondialRelayApiException $e) {
         echo "Failed to download label: {$e->getMessage()}\n";
-    }
-}
-
-// ============================================================================
-// Example 7: Advanced error handling
-// ============================================================================
-
-function advancedErrorHandling(MondialRelayApiClient $client): void
-{
-    try {
-        $criteria = RelayPointSearchCriteria::fromPostalCode('75002', 'FR');
-        $collection = $client->findRelayPoints($criteria);
-        // ... process results
-    } catch (\Kiora\SyliusMondialRelayPlugin\Api\Exception\MondialRelayAuthenticationException $e) {
-        // Authentication failed - critical error
-        error_log('CRITICAL: Invalid Mondial Relay API credentials');
-        // Send alert to admin
-        // Disable feature temporarily
-    } catch (MondialRelayApiException $e) {
-        // Check error type
-        if ($e->isTemporary()) {
-            // Temporary error - retry later
-            error_log("Temporary error: {$e->getMessage()}");
-            // Queue for retry
-        } elseif ($e->isConfigurationError()) {
-            // Configuration issue
-            error_log("Configuration error: {$e->getMessage()}");
-            // Alert admin
-        } elseif ($e->isValidationError()) {
-            // Invalid request data
-            error_log("Validation error: {$e->getMessage()}");
-            // Show user-friendly error
-        } else {
-            // Unknown error
-            error_log("Unknown error: {$e->getMessage()}");
-        }
-
-        // Log context for debugging
-        error_log('Error context: ' . json_encode($e->getContext()));
     }
 }
 
@@ -298,7 +256,7 @@ function advancedErrorHandling(MondialRelayApiClient $client): void
 // Example 8: Working with collections
 // ============================================================================
 
-function collectionOperations(MondialRelayApiClient $client): void
+function collectionOperations(MondialRelaySoapClient $client): void
 {
     try {
         $criteria = RelayPointSearchCriteria::fromPostalCode('75002', 'FR', limit: 50);
@@ -325,16 +283,13 @@ function collectionOperations(MondialRelayApiClient $client): void
         }
 
         // Filter by criteria
-        $withParking = $collection->filterByService('parking');
-        $wheelchairAccessible = $collection->filterByService('wheelchair_accessible');
         $nearbyOnly = $collection->filterByMaxDistance(2000); // Within 2km
         $activeOnly = $collection->filterActive();
 
         // Chain filters
         $filtered = $collection
             ->filterActive()
-            ->filterByMaxDistance(1500)
-            ->filterByService('parking');
+            ->filterByMaxDistance(1500);
 
         echo "After filtering: {$filtered->count()} points\n";
 
@@ -351,16 +306,55 @@ function collectionOperations(MondialRelayApiClient $client): void
 }
 
 // ============================================================================
+// Example 9: Error handling
+// ============================================================================
+
+function errorHandling(MondialRelaySoapClient $soapClient): void
+{
+    try {
+        $criteria = RelayPointSearchCriteria::fromPostalCode('75002', 'FR');
+        $collection = $soapClient->findRelayPoints($criteria);
+        // ... process results
+    } catch (\Kiora\SyliusMondialRelayPlugin\Api\Exception\MondialRelayAuthenticationException $e) {
+        // Authentication failed - critical error
+        error_log('CRITICAL: Invalid Mondial Relay API credentials');
+        // Check your enseigne code and private key
+    } catch (MondialRelayApiException $e) {
+        // Check error type
+        if ($e->isTemporary()) {
+            // Temporary error - retry later
+            error_log("Temporary error: {$e->getMessage()}");
+        } elseif ($e->isConfigurationError()) {
+            // Configuration issue
+            error_log("Configuration error: {$e->getMessage()}");
+        } elseif ($e->isValidationError()) {
+            // Invalid request data
+            error_log("Validation error: {$e->getMessage()}");
+        } else {
+            // Unknown error
+            error_log("Unknown error: {$e->getMessage()}");
+        }
+
+        // Log context for debugging
+        error_log('Error context: ' . json_encode($e->getContext()));
+    }
+}
+
+// ============================================================================
 // Run examples (uncomment the ones you want to test)
 // ============================================================================
 
 // $logger = new YourLogger();
-// $client = createApiClient($logger);
 
-// searchByPostalCode($client);
-// searchByCoordinates($client);
-// getRelayPointDetails($client, '012345');
-// createShipment($client);
-// downloadLabel($client, 'EXP123456789');
-// advancedErrorHandling($client);
-// collectionOperations($client);
+// SOAP client for relay point search
+// $soapClient = createSoapClient($logger);
+// searchByPostalCode($soapClient);
+// searchByCoordinates($soapClient);
+// getRelayPointDetails($soapClient, '012345');
+// collectionOperations($soapClient);
+// errorHandling($soapClient);
+
+// REST API client for shipments and labels
+// $restClient = createRestApiClient($logger);
+// createShipment($restClient);
+// downloadLabel($restClient, 'EXP123456789');
